@@ -190,10 +190,10 @@ def make_classif(self, nfolds, fname, cl, parm, stratif, dir):
 
         suffix = os.path.basename(str(fname))
         suffix = os.path.splitext(suffix)[0]
-        route = dir + '/' + suffix + '/' + suffix
+        route = dir + '/' + suffix + '/' + suffix + str(nfolds) + '_' + stratif.lower() + '/'
 
-        X_train, y_train = readDataFromFile(self, route+'_'+stratif.lower()+str(i)+'.train')
-        X_test, y_test = readDataFromFile(self, route+'_'+stratif.lower()+str(i)+'.test')
+        X_train, y_train = readDataFromFile(self, route + suffix + str(i) + '.train')
+        X_test, y_test = readDataFromFile(self, route + suffix + str(i) + '.test')
 
         if X_train.size <= 1 or X_test.size <= 1:
             self.emit(SIGNAL('infoclassif'), 'ERROR1')
@@ -509,4 +509,3 @@ def configure(self, classif, nfolds, fname):
                                                        u"Seleccione el valor de criterion para Decision Tree: ",
                                                        crits, 0, False)
                 self.child3.set("criterion_dt" + str(i), str(criterion_dt))
-

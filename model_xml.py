@@ -1,3 +1,4 @@
+# coding=utf-8
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 import sys, os, numpy as np, time
@@ -11,6 +12,12 @@ from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from lxml import etree
 import model_dataset as md, model_folds as mf, model_clasificacion as mc
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import inch
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, Image
+from reportlab.lib.styles import getSampleStyleSheet
+
 gk = 5
 gn_neighbors = 5
 gn_estimators = 10
@@ -19,6 +26,7 @@ gcriterion_dt = 'gini'
 gkernel = 'rbf'
 ggamma = 0.0
 gC = 1.0
+
 
 def load(self):
     dlg = QFileDialog()
@@ -77,17 +85,55 @@ def execute_dset(self, fname, dir):
             op4.append(str(False))
 
     if dsactive == 1:
+
+        doc = SimpleDocTemplate(dir + '/' + "plot-report.pdf")
+        styles = getSampleStyleSheet()
+        parts = []
         for i in range(0, len(fileds)):
+            tmp = os.path.basename(str(fileds[i]))
+            dat = os.path.splitext(tmp)[0]
+
+            save = str(dir) + '/' + dat + '/'
+
+            parts.append(Spacer(1, 0.2 * inch))
+            p = Paragraph("Dataset: " + dat, styles["Title"])
+            parts.append(Spacer(1, 0.2 * inch))
+            parts.append(p)
+
             self.emit(SIGNAL('textoinf'), 'INFO1')
             if not op1[i] == 'False':
                 df = md.convert(self, fileds[i], dir)
                 c, insts = md.cardinality(self, df)
             if not op2[i] == 'False':
                 md.coov(self, fileds[i], dir, True, False)
+
+                parts.append(Spacer(1, 0.2 * inch))
+                p = Paragraph(u"Gráfica de correlación entre etiquetas", styles["Heading3"])
+                parts.append(p)
+
+                parts.append(Image(save + dat + '_corrlabls.png'))
+                parts.append(PageBreak())
+
             if not op3[i] == 'False':
                 md.coov(self, fileds[i], dir, False, True)
+
+                parts.append(Spacer(1, 0.2 * inch))
+                p = Paragraph(u"Gráfica de distribucion de la correlación", styles["Heading3"])
+                parts.append(p)
+
+                parts.append(Image(save + dat + '_corrordered.png'))
+                parts.append(PageBreak())
             if not op4[i] == 'False':
-                md.labfrecplot(c, insts)
+                md.labfrecplot(c, insts, fname, dir)
+
+                parts.append(Spacer(1, 0.2 * inch))
+                p = Paragraph(u"Gráfica de frecuencia de las etiquetas", styles["Heading3"])
+                parts.append(p)
+
+                parts.append(Image(save + dat + '_freclbs.png'))
+                parts.append(PageBreak())
+        doc.build(parts)
+        #canv.save()
 
     self.emit(SIGNAL('finished'))
 
@@ -244,7 +290,7 @@ def execute_class(self, fname, dir):
                     self.emit(SIGNAL('infoclassif'), u'    n_estimators: ' + str(st[0]))
                     self.emit(SIGNAL('infoclassif'), u'    criterion_rf: ' + str(st[1]))
                     n_estimators.append(str(st[0]))
-                    criterion_rf.append(str(st[1]))
+                    criterion_rf.append(str(st[1]).strip())
                 else:
                     n_estimators.append('0')
                     criterion_rf.append('0')
@@ -326,6 +372,7 @@ def execute_class(self, fname, dir):
 
             print call
             print parms
+
             if nflds[i] > 0:
                 suffix = os.path.basename(str(fclass[i]))
                 suffix = os.path.splitext(suffix)[0]

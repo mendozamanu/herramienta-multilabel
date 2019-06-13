@@ -3,6 +3,7 @@ import model_folds as mf
 import model_clasificacion as mc
 import model_xml as mx
 
+
 def eventload(a):
     fname = md.open_file(a)
 
@@ -32,6 +33,7 @@ def genFolds(a, f):
 def getargs(a, method):
     args = mc.getargs(a, method)
     return args
+
 
 def conf_class(a, classif, nf, fname):
     mc.configure(a, classif, nf, fname)

@@ -14,7 +14,8 @@ from collections import defaultdict
 #  BUGS: 1. al volver para atras cuando abres subventanas (cargar dset, o pedir medidas, se abren 3 veces)
 #        2. cuando termina la ejecucion salen 2 errors/warnings sobre QObject::startTumer: Qtimer solo s puede usar en
 #        hilos lanzados por QThread.
-#        ???
+#        3. Object::disconnect: Unexpected null parameter en el pc de casa
+#          ???
 
 root = etree.Element("experimento")
 filename = ['',]

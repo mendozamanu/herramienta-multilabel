@@ -321,9 +321,13 @@ def cardinality(self, df):
         return dat, insts
 
 
-def labfrecplot(dat, insts):
+def labfrecplot(dat, insts, name, dir):
     # matplotlib.use('Agg')
     # insts[] is the vector to plot
+    tmp = os.path.basename(str(name))
+    dat = os.path.splitext(tmp)[0]
+    save = str(dir) + '/' + dat + '/'
+
     flbs = np.trim_zeros(insts, 'b')
     objects = range(0, flbs.shape[0])
     y_pos = np.arange(len(objects))
@@ -337,7 +341,8 @@ def labfrecplot(dat, insts):
     for i, j in zip(flbs, y_pos):
         plt.annotate(str(flbs[j]), xy=(j, i + (np.max(flbs) * 0.01)), horizontalalignment='center')
 
-    plt.show()
+    # plt.show()
+    plt.savefig(save + dat + '_freclbs.png')
     plt.close()
 
 
@@ -537,8 +542,8 @@ def coov(self, name, dir, plt1, plt2):
             for i, j in zip(labelscorrel, y_pos):
                 plt.annotate(str(labelscorrel[j]), xy=(j, i + (np.max(labelscorrel) * 0.01)), horizontalalignment='center')
 
-            plt.show()
-            # plt.savefig(str(name) + '_corrlabls.png')
+            # plt.show()
+            plt.savefig(save + dat + '_corrlabls.png')
             plt.close()
 
         if plt2:
@@ -553,6 +558,6 @@ def coov(self, name, dir, plt1, plt2):
             plt.annotate(str("{0:.3f}".format(cor[0])), xy=(0, cor[0] + 0.02))
             plt.annotate(str("{0:.3f}".format(cor[-1])), xy=((n * n) - n - 2, cor[-1] + 0.02))
 
-            plt.show()
-            # plt.savefig(name + '_corrordered.png')
+            # plt.show()
+            plt.savefig(save + dat + '_corrordered.png')
             plt.close()

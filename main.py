@@ -960,7 +960,7 @@ class MainApplication(QMainWindow):
 
         self.btn2.setEnabled(False)
         self.btn3.setEnabled(False)
-        self.btn4.setEnabled(False)
+        #self.btn4.setEnabled(False)
 
         self.btn1.clicked.connect(self.startDatasetTab)
         self.btn2.clicked.connect(self.startFoldsTab)

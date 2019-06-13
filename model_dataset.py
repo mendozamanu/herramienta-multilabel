@@ -241,6 +241,7 @@ def cardinality(self, df):
         insts = np.zeros(labels, dtype=int)
 
         nwdfname = str(df)[:str(df).rfind('.')] + "_measures.report"
+        print '>>>>>>'+nwdfname
         self.emit(SIGNAL('textoinf'), "\nMedidas del dataset: ")
         fp = open(nwdfname, 'w')
         fp.write("Instances: " + str(instances) + '\n')
@@ -276,6 +277,22 @@ def cardinality(self, df):
 
             l4 = datafile.readline()
 
+        un_combs = set(dist)
+        # print sorted(un_combs)
+        # print ("----------------")
+        fp.write("Cardinality: ")
+        card = avg / (instances * 1.0)
+        fp.write(str(card) + '\n')
+        self.emit(SIGNAL('textoinf'), ">Cardinality: " + str(card))
+
+        fp.write("Density: ")
+        fp.write(str(card / (labels * 1.0)) + '\n')
+        self.emit(SIGNAL('textoinf'), ">Density: " + str(card / (labels * 1.0)))
+
+        fp.write("Distinct: ")
+        fp.write(str(len(un_combs)) + '\n')
+        self.emit(SIGNAL('textoinf'), ">Distinct: " + str(len(un_combs)))
+
         fp.write("Num of instances per label-count (0, 1, 2, ... nlabel)\n")
         for i in range(0, insts.shape[0]):
             fp.write(str(i) + ' ' + str(insts[i]) + '\n')
@@ -297,31 +314,16 @@ def cardinality(self, df):
         for value, count in countr.most_common():
             fp.write(str(int(value, 2)) + ' ' + str(count) + '\n')
         # print countr
-        un_combs = set(dist)
-        # print sorted(un_combs)
-        # print ("----------------")
-        fp.write("Cardinality: ")
-        card = avg / (instances * 1.0)
-        fp.write(str(card) + '\n')
-        self.emit(SIGNAL('textoinf'), ">Cardinality: " + str(card))
-
-        fp.write("Density: ")
-        fp.write(str(card / (labels * 1.0)) + '\n')
-        self.emit(SIGNAL('textoinf'), ">Density: " + str(card / (labels * 1.0)))
-
-        fp.write("Distinct: ")
-        fp.write(str(len(un_combs)) + '\n')
-        self.emit(SIGNAL('textoinf'), ">Distinct: " + str(len(un_combs)))
 
         datafile.close()
         self.emit(SIGNAL('textoinf'), "\nFichero report creado: " + '\n>>' + str(nwdfname) +
                   " guardado correctamente")
         fp.close()
 
-        return dat, insts
+        return nwdfname, insts
 
 
-def labfrecplot(dat, insts, name, dir):
+def labfrecplot(insts, name, dir):
     # matplotlib.use('Agg')
     # insts[] is the vector to plot
     tmp = os.path.basename(str(name))

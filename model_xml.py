@@ -13,10 +13,11 @@ from sklearn.tree import DecisionTreeClassifier
 from lxml import etree
 import model_dataset as md, model_folds as mf, model_clasificacion as mc
 from reportlab.pdfgen import canvas
-from reportlab.lib.units import inch
+from reportlab.lib.units import inch, mm
 from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, Image
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, Image, Table
 from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib import colors
 
 gk = 5
 gn_neighbors = 5
@@ -101,14 +102,69 @@ def execute_dset(self, fname, dir):
             parts.append(p)
 
             self.emit(SIGNAL('textoinf'), 'INFO1')
+
             if not op1[i] == 'False':
                 df = md.convert(self, fileds[i], dir)
-                c, insts = md.cardinality(self, df)
+                report, insts = md.cardinality(self, df)
+
+                parts.append(Spacer(1, 0.2 * inch))
+                p = Paragraph(u"Medidas: ", styles["Heading2"])
+                parts.append(p)
+
+                fo = open(report, 'r')
+
+                headers = []
+                data = []
+
+                for o in range(0, 6):
+                    inline = fo.readline()
+                    part = inline.split(': ')
+
+                    if part[0] == 'Instances':
+                        headers.append(u"Nº de instancias")
+                        data.append(str(part[1]).strip('\n'))
+
+                    if part[0] == 'Features':
+                        headers.append(u"Nº de características")
+                        data.append(str(part[1]).strip('\n'))
+
+                    if part[0] == 'Labels':
+                        headers.append(u"Nº de etiquetas")
+                        data.append(str(part[1]).strip('\n'))
+
+                    if part[0] == 'Cardinality':
+                        headers.append(u"Cardinalidad")
+                        data.append(str(part[1]).strip('\n'))
+
+                    if part[0] == 'Density':
+                        headers.append(u"Densidad de etiquetas")
+                        data.append(str(part[1]).strip('\n'))
+
+                    if part[0] == 'Distinct':
+                        headers.append(u"Nº de combinaciones de etiquetas distintas")
+                        data.append(str(part[1]).strip('\n'))
+
+                parts.append(Spacer(1, 0.4 * inch))
+                tmp = []
+                for l in range(0, 6):
+                    tmp.append(headers[l:l+1] + data[l:l+1])
+
+                print tmp
+
+                t = Table(tmp, rowHeights=(10*mm, 10*mm, 10*mm, 10*mm, 10*mm, 10*mm), colWidths=(70*mm, 60*mm),
+                          style=[('GRID',(0,0),(-1,-1),0.5,colors.black), ('BACKGROUND', (0, 0), (0, -1), colors.silver),
+                                ('ALIGN',(0,0),(-1,-1),'CENTER'), ('VALIGN',(0,0),(-1,-1),'MIDDLE'),
+                                ])
+                parts.append(t)
+                parts.append(Spacer(1, 0.2 * inch))
+
+                parts.append(PageBreak())
+
             if not op2[i] == 'False':
                 md.coov(self, fileds[i], dir, True, False)
 
                 parts.append(Spacer(1, 0.2 * inch))
-                p = Paragraph(u"Gráfica de correlación entre etiquetas", styles["Heading3"])
+                p = Paragraph(u"Gráfica de correlación entre etiquetas", styles["Heading2"])
                 parts.append(p)
 
                 parts.append(Image(save + dat + '_corrlabls.png'))
@@ -118,21 +174,22 @@ def execute_dset(self, fname, dir):
                 md.coov(self, fileds[i], dir, False, True)
 
                 parts.append(Spacer(1, 0.2 * inch))
-                p = Paragraph(u"Gráfica de distribucion de la correlación", styles["Heading3"])
+                p = Paragraph(u"Gráfica de distribucion de la correlación", styles["Heading2"])
                 parts.append(p)
 
                 parts.append(Image(save + dat + '_corrordered.png'))
                 parts.append(PageBreak())
             if not op4[i] == 'False':
-                md.labfrecplot(c, insts, fname, dir)
+                md.labfrecplot(insts, fname, dir)
 
                 parts.append(Spacer(1, 0.2 * inch))
-                p = Paragraph(u"Gráfica de frecuencia de las etiquetas", styles["Heading3"])
+                p = Paragraph(u"Gráfica de frecuencia de las etiquetas", styles["Heading2"])
                 parts.append(p)
 
                 parts.append(Image(save + dat + '_freclbs.png'))
                 parts.append(PageBreak())
         doc.build(parts)
+        self.emit(SIGNAL('textoinf'), '\nInforme PDF generado, puede consultarlo en: ' + dir + '/' + "plot-report.pdf")
         #canv.save()
 
     self.emit(SIGNAL('finished'))

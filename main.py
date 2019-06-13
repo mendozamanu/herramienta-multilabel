@@ -110,6 +110,44 @@ class GenericThread(QThread):
         return
 
 
+class PlotWindow(QMainWindow):
+    def __init__(self, parent=None):
+        super(PlotWindow, self).__init__(parent)
+
+        searchdir = str(dir) + '/' + 'tmp/'
+
+        self.setWindowTitle(u"Herramienta para el estudio del problema "
+                            u"de desequilibrio en problemas de clasificación multietiqueta")
+
+        self.scrollArea = QScrollArea(widgetResizable=True)
+        self.setCentralWidget(self.scrollArea)
+        content_widget = QWidget()
+        self.scrollArea.setWidget(content_widget)
+        lay = QVBoxLayout(content_widget)
+        save = QPushButton("Guardar todas")
+
+        i = 0
+
+        saveP = []
+        tosave = []
+        for file in os.listdir(searchdir):
+            pixmap = QPixmap(os.path.join(searchdir, file))
+            if not pixmap.isNull():
+                label = QLabel(pixmap=pixmap)
+                lay.addWidget(label)
+
+                tosave.append(file)
+                saveP.append(QPushButton("Guardar"))  # TODO: cuidado aqui porq crea un boton igual para todas las posibles figuras cargadas
+                lay.addWidget(saveP[i])
+                i+=1
+
+        lay.addWidget(save)
+        print tosave
+
+        for k in range(0, i):
+            print k  # TODO Definir funcion save fichero con el nombre del fichero en tosave[k] - ruta por defecto: global "dir"
+
+
 class XmlW(QMainWindow):
     def loadXmlW(self):
 
@@ -252,7 +290,12 @@ class XmlW(QMainWindow):
         self.progress.setValue(progress)
 
     def nxt(self):
-        self.exec_folds()
+        # TODO: antes de ejecutar next, mostrar la ventana de las graficas
+        #  when close, entonces pasamos a la sig
+        self.plots = PlotWindow(self)
+        self.plots.show()
+
+        #self.exec_folds()
 
     def lst(self):
         self.exec_class()

@@ -94,7 +94,9 @@ def execute_dset(self, fname, dir):
             tmp = os.path.basename(str(fileds[i]))
             dat = os.path.splitext(tmp)[0]
 
-            save = str(dir) + '/' + dat + '/'
+            save = str(dir) + '/' + 'tmp/'
+            if not os.path.exists(save):
+                os.makedirs(save)
 
             parts.append(Spacer(1, 0.2 * inch))
             p = Paragraph("Dataset: " + dat, styles["Title"])
@@ -188,9 +190,9 @@ def execute_dset(self, fname, dir):
 
                 parts.append(Image(save + dat + '_freclbs.png'))
                 parts.append(PageBreak())
+
         doc.build(parts)
         self.emit(SIGNAL('textoinf'), '\nInforme PDF generado, puede consultarlo en: ' + dir + '/' + "plot-report.pdf")
-        #canv.save()
 
     self.emit(SIGNAL('finished'))
 

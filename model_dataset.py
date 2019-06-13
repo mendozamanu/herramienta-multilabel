@@ -328,7 +328,7 @@ def labfrecplot(insts, name, dir):
     # insts[] is the vector to plot
     tmp = os.path.basename(str(name))
     dat = os.path.splitext(tmp)[0]
-    save = str(dir) + '/' + dat + '/'
+    save = str(dir) + '/' + 'tmp/'
 
     flbs = np.trim_zeros(insts, 'b')
     objects = range(0, flbs.shape[0])
@@ -380,7 +380,7 @@ def coov(self, name, dir, plt1, plt2):
     tmp = os.path.basename(str(name))
     dat = os.path.splitext(tmp)[0]
 
-    save = str(dir) + '/' + dat + '/'
+    save = str(dir) + '/' + 'tmp/'
 
     if not str(name).lower().endswith('.arff'):
         self.emit(SIGNAL("textoinf"), 'ERROR1')

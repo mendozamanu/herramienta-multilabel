@@ -6,16 +6,17 @@ from PyQt4.QtCore import *
 
 import ctrl
 from lxml import etree
-from collections import defaultdict
+from functools import partial
 
 # TODO https://stackoverflow.com/questions/3605680/creating-a-simple-xml-file-using-python#3605831 #usamos lxml
 
 # TODO
 #  BUGS: 1. al volver para atras cuando abres subventanas (cargar dset, o pedir medidas, se abren 3 veces)
-#        2. cuando termina la ejecucion salen 2 errors/warnings sobre QObject::startTumer: Qtimer solo s puede usar en
+#        2. cuando termina la ejecucion salen 2 errors/warnings sobre QObject::startTumer: Qtimer solo se puede usar en
 #        hilos lanzados por QThread.
 #        3. Object::disconnect: Unexpected null parameter en el pc de casa
-#          ???
+#        4. Al cancelar la ejecucion del programa porq se pulse volver a otra ventana o cerrar, que termine
+#        todo correctamente
 
 root = etree.Element("experimento")
 filename = ['',]
@@ -124,12 +125,15 @@ class PlotWindow(QMainWindow):
         content_widget = QWidget()
         self.scrollArea.setWidget(content_widget)
         lay = QVBoxLayout(content_widget)
-        save = QPushButton("Guardar todas")
+        self.saveall = QPushButton("Guardar todas")
 
         i = 0
 
-        saveP = []
+        self.saveP = []
         tosave = []
+        self.all = 0
+        # QMessageBox.about(self, 'Procesando...', u"Cargando gráficas...")
+
         for file in os.listdir(searchdir):
             pixmap = QPixmap(os.path.join(searchdir, file))
             if not pixmap.isNull():
@@ -137,15 +141,61 @@ class PlotWindow(QMainWindow):
                 lay.addWidget(label)
 
                 tosave.append(file)
-                saveP.append(QPushButton("Guardar"))  # TODO: cuidado aqui porq crea un boton igual para todas las posibles figuras cargadas
-                lay.addWidget(saveP[i])
+                tmp1 = QPushButton("Guardar")
+                self.saveP.append(tmp1)  # TODO: cuidado aqui porq crea un boton igual para todas las posibles figuras cargadas
+                lay.addWidget(self.saveP[i])
                 i+=1
 
-        lay.addWidget(save)
+        print self.saveP
+        lay.addWidget(self.saveall)
+        self.saveall.clicked.connect(partial(self.save_complete, tosave))
         print tosave
 
-        for k in range(0, i):
-            print k  # TODO Definir funcion save fichero con el nombre del fichero en tosave[k] - ruta por defecto: global "dir"
+        self.idx = 0
+
+        for p in range(0, len(self.saveP)):
+            print p
+            print self.saveP[p].clicked
+            print tosave[p]
+            self.saveP[p].clicked.connect(partial(self.save, tosave[p]))
+
+        #print tosave
+
+    def save_complete(self, fnams):
+        route = str(QFileDialog.getExistingDirectory(self, 'Select Directory'))
+
+        if route:
+            for t in range(0, len(fnams)):
+                with open(route+'/'+fnams[t], 'wb') as f:
+                    fr = open(dir + '/tmp/' + fnams[t], 'rb')
+                    data = fr.read()
+                    f.write(data)
+                    xmlname = str(route+'/'+fnams[t])
+                    f.close()
+                    fr.close()
+            QMessageBox.about(self, "Correcto", u"Gráficas guardadas correctamente en el directorio: "+str(route))
+        else:
+            QMessageBox.about(self, "Cancelado", u"Guardado cancelado")
+
+    def save(self, fname):
+
+        dlg = QFileDialog().getSaveFileName(self, u'Guardar gráfica', selectedFilter='Image files (*.png)')
+        global xmlname
+        if dlg:
+            if not str(dlg).endswith('.png'):
+                dlg = os.path.splitext(str(dlg))[0] + '.png'
+
+            with open(dlg, 'wb') as f:
+                fr = open(dir+'/tmp/'+fname, 'rb')
+                data = fr.read()
+                f.write(data)
+                QMessageBox.about(self, "OK", u"Gráfica guardada, ruta: " + str(dlg))
+                xmlname = str(dlg)
+                print xmlname
+                f.close()
+                fr.close()
+        else:
+            QMessageBox.about(self, "Cancelado", u"Guardado cancelado")
 
 
 class XmlW(QMainWindow):
@@ -290,12 +340,15 @@ class XmlW(QMainWindow):
         self.progress.setValue(progress)
 
     def nxt(self):
-        # TODO: antes de ejecutar next, mostrar la ventana de las graficas
+        # TODO: antes de ejecutar next, mostrar la ventana de las graficas  # ---------------------------------------------
         #  when close, entonces pasamos a la sig
         self.plots = PlotWindow(self)
         self.plots.show()
 
-        #self.exec_folds()
+        self.exec_folds()
+
+    def closeEvent(self, event):
+        self.plots.close()
 
     def lst(self):
         self.exec_class()
@@ -721,9 +774,7 @@ class DatasetW(QMainWindow):
             self.contents.append(u"Aviso. No se puede guardar el XML porque no hay información a guardar, "
                                  u"añada antes uno o varios datasets")
             return
-
         else:
-
             for i in range(0, len(datasets)):
                 self.child1 = etree.SubElement(root, "dataset")
 

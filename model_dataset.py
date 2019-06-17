@@ -344,6 +344,8 @@ def labfrecplot(insts, name, dir):
         plt.annotate(str(flbs[j]), xy=(j, i + (np.max(flbs) * 0.01)), horizontalalignment='center')
 
     # plt.show()
+    print name
+    print dat
     plt.savefig(save + dat + '_freclbs.png')
     plt.close()
 

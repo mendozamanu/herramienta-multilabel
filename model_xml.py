@@ -15,7 +15,7 @@ import model_dataset as md, model_folds as mf, model_clasificacion as mc
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import inch, mm
 from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, Image, Table
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, Image, Table, KeepTogether
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 
@@ -182,13 +182,13 @@ def execute_dset(self, fname, dir):
                 parts.append(Image(save + dat + '_corrordered.png'))
                 parts.append(PageBreak())
             if not op4[i] == 'False':
-                md.labfrecplot(insts, fname, dir)
+                md.labfrecplot(insts, fileds[i], dir)
 
                 parts.append(Spacer(1, 0.2 * inch))
                 p = Paragraph(u"Gráfica de frecuencia de las etiquetas", styles["Heading2"])
                 parts.append(p)
 
-                parts.append(Image(save + dat + '_freclbs.png'))
+                parts.append(Image(save + dat + '_freclbs.png', width=640, height=480, kind='proportional'))
                 parts.append(PageBreak())
 
         doc.build(parts)

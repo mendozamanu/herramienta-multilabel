@@ -34,10 +34,16 @@ startxml = False
 datasets = []  # Contendra elems de la clase dset, estratif y metodo
 xmlUI = None
 
+dsW = False
+fW = False
+cW = False
+xW = False
+
+b1 = False
+
 proxy = QIdentityProxyModel()
 
 
-#TODO: no req name al inicializ clase
 class dataset:
 
     def __init__(self):
@@ -139,7 +145,8 @@ class PlotWindow(QMainWindow):
         for file in os.listdir(searchdir):
             pixmap = QPixmap(os.path.join(searchdir, file))
             if not pixmap.isNull():
-                label = QLabel(pixmap=pixmap)
+                label = QLabel(pixmap=pixmap.scaled(640,480, Qt.KeepAspectRatio))
+
                 lay.addWidget(label)
 
                 tosave.append(file)
@@ -147,6 +154,11 @@ class PlotWindow(QMainWindow):
                 self.saveP.append(tmp1)
                 lay.addWidget(self.saveP[i])
                 i+=1
+
+        if len(self.saveP) == 0:
+            # emitir señal de cerrar ventana
+            self.emit(SIGNAL('close'), self.closeEvent)
+            print 'entra'
 
         print self.saveP
         lay.addWidget(self.saveall)
@@ -239,6 +251,11 @@ class XmlW(QMainWindow):
         self.grid.addWidget(self.btn4, 3, 1)
 
         self.centralWidget().setLayout(self.grid)
+
+        framegm = self.frameGeometry()
+        centerp = QApplication.desktop().screenGeometry().center()
+        framegm.moveCenter(centerp)
+        self.move(framegm.topLeft())
 
         self.plots = None
 
@@ -482,6 +499,11 @@ class ClassifW(QMainWindow):
 
         self.centralWidget().setLayout(self.grid)
 
+        framegm = self.frameGeometry()
+        centerp = QApplication.desktop().screenGeometry().center()
+        framegm.moveCenter(centerp)
+        self.move(framegm.topLeft())
+
         self.lst.clicked.connect(self.getOperats)
 
     def __init__(self, parent=None):
@@ -694,6 +716,11 @@ class DatasetW(QMainWindow):
         self.grid1.addWidget(self.btn2, 6, 1, 1, 14)
 
         self.centralWidget().setLayout(self.grid1)
+
+        framegm = self.frameGeometry()
+        centerp = QApplication.desktop().screenGeometry().center()
+        framegm.moveCenter(centerp)
+        self.move(framegm.topLeft())
         # self.setCentralWidget(widget)
         self.contents.setText("Datasets seleccionados: ")
 
@@ -726,6 +753,15 @@ class DatasetW(QMainWindow):
             self.contents.append("Aviso, para calcular la frecuencia de las etiquetas hay que "
                                  "calcular las medidas del dataset")
 
+    def closeEvent(self, evnt):
+        print 'saliendo...'
+        global file, dsW
+        file = ''
+        while self.grid1.count():
+            item = self.grid1.takeAt(0)
+            item.widget().deleteLater()
+        dsW = False
+
     def getOperats(self):
         for SelectedItem in self.list.selectedItems():
             self.c1.setChecked(datasets[self.list.row(SelectedItem)].op1)
@@ -736,16 +772,22 @@ class DatasetW(QMainWindow):
     def getdataset(self):
         global file
         global text
-        file = ctrl.eventload(self)
-        filename.append(file)
-        exists = self.list.findItems(file, Qt.MatchRegExp)
-        if not exists:
-            # self.list.addItem(file)
-            self.contents.append(file)
-            self.c1.setChecked(False)
-            self.c2.setChecked(False)
-            self.c3.setChecked(False)
-            self.c4.setChecked(False)
+
+        file = self.le.text()
+        if file == '':
+            file = ctrl.eventload(self)
+            if not file == '':  # Se ha cancelado la operac
+                filename.append(file)
+                exists = self.list.findItems(file, Qt.MatchRegExp)
+                if not exists:
+                    # self.list.addItem(file)
+                    self.contents.append(file)
+                    self.c1.setChecked(False)
+                    self.c2.setChecked(False)
+                    self.c3.setChecked(False)
+                    self.c4.setChecked(False)
+            else:
+                self.contents.append(u"Operación cancelada")
         else:
             self.contents.append(u'Aviso. El dataset indicado ya se ha cargado')
 
@@ -759,7 +801,7 @@ class DatasetW(QMainWindow):
         print len(datasets)
 
     def partialsave(self):
-        global datasets
+        global datasets, file
         if not file == '':
             exists = self.list.findItems(file, Qt.MatchRegExp)
             if not exists:
@@ -776,11 +818,20 @@ class DatasetW(QMainWindow):
                 ds.add_op4(self.c4.isChecked())
                 datasets.append(ds)
                 # print datasets[0].ops
-                print datasets[0].name
+                print 'dset: '+datasets[0].name
+                print 'len: '+str(len(datasets))
+                file = ''
+                self.le.setText('')
+                global b1
+                b1 = False
+                print 'file: '+file
+
             global proxy
             proxy.setSourceModel(self.list.model())
 
     def plots(self):
+        global b1
+        b1 = False
         if len(datasets) < 1:
             self.contents.append(u"Aviso. No se puede guardar el XML porque no hay información a guardar, "
                                  u"añada antes uno o varios datasets")
@@ -818,9 +869,6 @@ class DatasetW(QMainWindow):
 class FoldsW(QMainWindow):
 
     def loadFlds(self):
-        global file
-        if file == '':
-            file = filename[-1]
 
         self.setCentralWidget(QWidget(self))
         self.threadPool = []
@@ -875,6 +923,14 @@ class FoldsW(QMainWindow):
         self.flabel3.hide()
         # self.grid2.addWidget(self.progress, 10, 0)  # , Qt.AlignLeft)
         self.centralWidget().setLayout(self.grid2)
+
+        framegm = self.frameGeometry()
+        centerp = QApplication.desktop().screenGeometry().center()
+        framegm.moveCenter(centerp)
+        self.move(framegm.topLeft())
+
+        print datasets
+
         self.lst.clicked.connect(self.getOperats)
 
     def __init__(self, parent=None):
@@ -887,10 +943,6 @@ class FoldsW(QMainWindow):
                             u"de desequilibrio en problemas de clasificación multietiqueta")
 
         self.loadFlds()
-
-    def getdatasetFname(self):
-        global file
-        file = ctrl.eventName(self)
 
     def getOperats(self):
         itms = self.lst.selectedIndexes()
@@ -1060,7 +1112,7 @@ class MainApplication(QMainWindow):
 
         self.btn2.setEnabled(False)
         self.btn3.setEnabled(False)
-        self.btn4.setEnabled(False)
+        #self.btn4.setEnabled(False)
 
         self.btn1.clicked.connect(self.startDatasetTab)
         self.btn2.clicked.connect(self.startFoldsTab)
@@ -1076,52 +1128,84 @@ class MainApplication(QMainWindow):
         self.setWindowTitle(u"Herramienta para el estudio del problema "
                             u"de desequilibrio en problemas de clasificación multietiqueta")
 
-        self.DataUI = DatasetW(self)
-        self.FoldUI = FoldsW(self)
-        self.ClassifUI = ClassifW(self)
-        global xmlUI
-        xmlUI = XmlW(self)
+        #self.DataUI = DatasetW(self)
+        #self.FoldUI = FoldsW(self)
+        #self.ClassifUI = ClassifW(self)
+        #global xmlUI
+        #xmlUI = XmlW(self)
 
         self.loadMain()
 
     def startDatasetTab(self):
 
-        global text
-        global filename
-        if len(text) > 1:
-            self.DataUI.contents.append(text)
-            self.DataUI.le.setText(filename)
+        global dsW
+
+        if not dsW:
+            self.DataUI = DatasetW(self)
+            print 'entro'
+            dsW = True
+        if dsW:
 
         # TODO: localizado el problema de abrir multiples ventanas en cargar dataset, plots etc...
         #   es porq se generan multiples eventos y parece q no se borran al cerrar la ventana
-        self.DataUI.btn1.clicked.connect(self.DataUI.getdataset)
-        self.DataUI.btn2.clicked.connect(self.startFoldsTab)
-        self.DataUI.btn3.clicked.connect(self.plot_xml)
-        self.DataUI.btn4.clicked.connect(self.DataUI.deletedset)
-        self.DataUI.btn5.clicked.connect(self.DataUI.partialsave)
+            self.DataUI.btn1.clicked.connect(self.clickevent1)
+            self.b1 = False
+            self.DataUI.btn2.clicked.connect(self.startFoldsTab)
+            self.DataUI.btn3.clicked.connect(self.plot_xml)
+            self.b3 = False
+            self.DataUI.btn4.clicked.connect(self.DataUI.deletedset)
+            self.DataUI.btn5.clicked.connect(self.DataUI.partialsave)
 
-        if not self.DataUI.isVisible():
-            self.DataUI.show()
-            print self.DataUI.isVisible()
+            if not self.DataUI.isVisible():
+                self.DataUI.show()
+                # print self.DataUI.isVisible()
+        if fW:
+            self.FoldUI.close()
+        if xW:
+            xmlUI.close()
+
+    def clickevent1(self):
+        global b1
+        self.b1 = b1 # Al principio sera false
+        if not self.b1:
+            self.DataUI.getdataset()
+            self.b1 = True
+            b1 = self.b1
 
     def plot_xml(self):
 
-        self.DataUI.plots()
-        if startxml:
-            self.DataUI.close()
-            self.startxmlTab()
+        global b1
+
+        if not self.b3:
+            self.DataUI.plots()
+            self.b3 = True
+            b1 = self.b3
+            if startxml:
+                self.DataUI.close()
+                self.startxmlTab()
+        self.b3 = b1
+
 
     def startFoldsTab(self):
 
-        self.DataUI.close()
-        self.btn2.setEnabled(True)
-        # self.FoldUI.btn1.clicked.connect(self.FoldUI.getdatasetFname)
-        self.FoldUI.btn2.clicked.connect(self.startDatasetTab)
-        self.FoldUI.btn3.clicked.connect(self.FoldUI.partsave)
-        self.FoldUI.btn4.clicked.connect(self.fold_xml)
-        self.FoldUI.btn5.clicked.connect(self.startClassifTab)
+        global fW
+        if not fW:
+            self.FoldUI = FoldsW(self)
+            fW = True
+        if fW:
+            self.DataUI.hide()
+            self.btn2.setEnabled(True)
+            # self.FoldUI.btn1.clicked.connect(self.FoldUI.getdatasetFname)
+            self.FoldUI.btn2.clicked.connect(self.startDatasetTab)
+            self.FoldUI.btn3.clicked.connect(self.FoldUI.partsave)
+            self.FoldUI.btn4.clicked.connect(self.fold_xml)
+            self.FoldUI.btn5.clicked.connect(self.startClassifTab)
 
-        self.FoldUI.show()
+            self.FoldUI.show()
+        if cW:
+            self.ClassifUI.close()
+        if xW:
+            xmlUI.close()
 
     def fold_xml(self):
         self.FoldUI.folds()
@@ -1131,29 +1215,48 @@ class MainApplication(QMainWindow):
 
     def startClassifTab(self):
 
-        self.FoldUI.close()
-        self.btn3.setEnabled(True)
-        self.btn4.setEnabled(True)
-        self.ClassifUI.btn2.clicked.connect(self.startFoldsTab)
-        self.ClassifUI.btn3.clicked.connect(self.ClassifUI.confmethods)
-        self.ClassifUI.methods.activated.connect(self.ClassifUI.signalDisable)
-        self.ClassifUI.btn4.clicked.connect(self.ClassifUI.getParams)
-        self.ClassifUI.btn5.clicked.connect(self.startxmlTab)
-        self.ClassifUI.show()
+        global cW
+        if not cW:
+            self.ClassifUI = ClassifW(self)
+            cW = True
+        if cW:
+            self.FoldUI.close()
+            self.btn3.setEnabled(True)
+            self.btn4.setEnabled(True)
+            self.ClassifUI.btn2.clicked.connect(self.startFoldsTab)
+            self.ClassifUI.btn3.clicked.connect(self.ClassifUI.confmethods)
+            self.ClassifUI.methods.activated.connect(self.ClassifUI.signalDisable)
+            self.ClassifUI.btn4.clicked.connect(self.ClassifUI.getParams)
+            self.ClassifUI.btn5.clicked.connect(self.startxmlTab)
+            self.ClassifUI.show()
+        if xW:
+            xmlUI.close()
 
     def startxmlTab(self):
+
+        global xW
+        if not xW:
+            global xmlUI
+            xmlUI = XmlW(self)
+            xW = True
 
         if xmlname == '':
             # Guardar las ops antes d camb d ventana
             self.ClassifUI.getParams()
+        if dsW:
+            self.DataUI.close()
+        if fW:
+            self.FoldUI.close()
+        if cW:
+            self.ClassifUI.close()
 
-        self.ClassifUI.close()
-        self.btn4.setEnabled(True)
-        xmlUI.load.setText(xmlname)
-        xmlUI.btn1.clicked.connect(xmlUI.getxmlfile)
-        xmlUI.btn2.clicked.connect(xmlUI.getWorkingDir)
-        xmlUI.btn3.clicked.connect(xmlUI.execute)
-        xmlUI.show()
+        if xW:
+            self.btn4.setEnabled(True)
+            xmlUI.load.setText(xmlname)
+            xmlUI.btn1.clicked.connect(xmlUI.getxmlfile)
+            xmlUI.btn2.clicked.connect(xmlUI.getWorkingDir)
+            xmlUI.btn3.clicked.connect(xmlUI.execute)
+            xmlUI.show()
 
     def closeEvent(self, event):  # Redefinimos el evento de cierre (pedir confirmacion)
 

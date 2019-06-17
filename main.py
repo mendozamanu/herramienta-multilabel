@@ -1,4 +1,5 @@
 # coding=utf-8
+import shutil
 import sys
 import os
 from PyQt4.QtGui import *
@@ -31,6 +32,7 @@ dir = './'
 xmlname = ''
 startxml = False
 datasets = []  # Contendra elems de la clase dset, estratif y metodo
+xmlUI = None
 
 proxy = QIdentityProxyModel()
 
@@ -142,7 +144,7 @@ class PlotWindow(QMainWindow):
 
                 tosave.append(file)
                 tmp1 = QPushButton("Guardar")
-                self.saveP.append(tmp1)  # TODO: cuidado aqui porq crea un boton igual para todas las posibles figuras cargadas
+                self.saveP.append(tmp1)
                 lay.addWidget(self.saveP[i])
                 i+=1
 
@@ -160,6 +162,13 @@ class PlotWindow(QMainWindow):
             self.saveP[p].clicked.connect(partial(self.save, tosave[p]))
 
         #print tosave
+
+    def closeEvent(self, event):
+        # Borrar carpeta temporal de gráficas
+        if os.path.isdir(dir+'/tmp/'):
+            shutil.rmtree(dir+'/tmp/')
+
+        xmlUI.exec_folds()
 
     def save_complete(self, fnams):
         route = str(QFileDialog.getExistingDirectory(self, 'Select Directory'))
@@ -230,6 +239,8 @@ class XmlW(QMainWindow):
         self.grid.addWidget(self.btn4, 3, 1)
 
         self.centralWidget().setLayout(self.grid)
+
+        self.plots = None
 
     def __init__(self, parent=None):
         super(XmlW, self).__init__(parent)
@@ -340,15 +351,15 @@ class XmlW(QMainWindow):
         self.progress.setValue(progress)
 
     def nxt(self):
-        # TODO: antes de ejecutar next, mostrar la ventana de las graficas  # ---------------------------------------------
-        #  when close, entonces pasamos a la sig
+
         self.plots = PlotWindow(self)
         self.plots.show()
 
-        self.exec_folds()
+        # self.exec_folds()
 
     def closeEvent(self, event):
-        self.plots.close()
+        if self.plots:
+            self.plots.close()
 
     def lst(self):
         self.exec_class()
@@ -1047,14 +1058,9 @@ class MainApplication(QMainWindow):
 
         self.centralWidget().setLayout(self.grid)
 
-        self.DataUI = DatasetW(self)
-        self.FoldUI = FoldsW(self)
-        self.ClassifUI = ClassifW(self)
-        self.xmlUI = XmlW(self)
-
         self.btn2.setEnabled(False)
         self.btn3.setEnabled(False)
-        #self.btn4.setEnabled(False)
+        self.btn4.setEnabled(False)
 
         self.btn1.clicked.connect(self.startDatasetTab)
         self.btn2.clicked.connect(self.startFoldsTab)
@@ -1070,6 +1076,12 @@ class MainApplication(QMainWindow):
         self.setWindowTitle(u"Herramienta para el estudio del problema "
                             u"de desequilibrio en problemas de clasificación multietiqueta")
 
+        self.DataUI = DatasetW(self)
+        self.FoldUI = FoldsW(self)
+        self.ClassifUI = ClassifW(self)
+        global xmlUI
+        xmlUI = XmlW(self)
+
         self.loadMain()
 
     def startDatasetTab(self):
@@ -1080,13 +1092,17 @@ class MainApplication(QMainWindow):
             self.DataUI.contents.append(text)
             self.DataUI.le.setText(filename)
 
+        # TODO: localizado el problema de abrir multiples ventanas en cargar dataset, plots etc...
+        #   es porq se generan multiples eventos y parece q no se borran al cerrar la ventana
         self.DataUI.btn1.clicked.connect(self.DataUI.getdataset)
         self.DataUI.btn2.clicked.connect(self.startFoldsTab)
         self.DataUI.btn3.clicked.connect(self.plot_xml)
         self.DataUI.btn4.clicked.connect(self.DataUI.deletedset)
         self.DataUI.btn5.clicked.connect(self.DataUI.partialsave)
 
-        self.DataUI.show()
+        if not self.DataUI.isVisible():
+            self.DataUI.show()
+            print self.DataUI.isVisible()
 
     def plot_xml(self):
 
@@ -1133,11 +1149,11 @@ class MainApplication(QMainWindow):
 
         self.ClassifUI.close()
         self.btn4.setEnabled(True)
-        self.xmlUI.load.setText(xmlname)
-        self.xmlUI.btn1.clicked.connect(self.xmlUI.getxmlfile)
-        self.xmlUI.btn2.clicked.connect(self.xmlUI.getWorkingDir)
-        self.xmlUI.btn3.clicked.connect(self.xmlUI.execute)
-        self.xmlUI.show()
+        xmlUI.load.setText(xmlname)
+        xmlUI.btn1.clicked.connect(xmlUI.getxmlfile)
+        xmlUI.btn2.clicked.connect(xmlUI.getWorkingDir)
+        xmlUI.btn3.clicked.connect(xmlUI.execute)
+        xmlUI.show()
 
     def closeEvent(self, event):  # Redefinimos el evento de cierre (pedir confirmacion)
 

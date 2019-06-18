@@ -12,7 +12,7 @@ from functools import partial
 # TODO https://stackoverflow.com/questions/3605680/creating-a-simple-xml-file-using-python#3605831 #usamos lxml
 
 # TODO
-#  BUGS: 1. al volver para atras cuando abres subventanas (cargar dset, o pedir medidas, se abren 3 veces)
+#  BUGS: 1. pantalla completa - vista poco estética - escalado feo
 #        2. cuando termina la ejecucion salen 2 errors/warnings sobre QObject::startTumer: Qtimer solo se puede usar en
 #        hilos lanzados por QThread.
 #        3. Object::disconnect: Unexpected null parameter en el pc de casa
@@ -20,7 +20,6 @@ from functools import partial
 #        todo correctamente
 
 root = etree.Element("experimento")
-filename = ['',]
 file = ''
 text = str('')
 nfolds = 0
@@ -39,7 +38,7 @@ fW = False
 cW = False
 xW = False
 
-b1 = False
+p1 = False
 
 proxy = QIdentityProxyModel()
 
@@ -110,13 +109,22 @@ class GenericThread(QThread):
         self.function = function
         self.args = args
         self.kwargs = kwargs
+        self.runs = True
 
     def __del__(self):
         self.wait()
 
     def run(self):
-        self.function(*self.args, **self.kwargs)
-        return
+        self.starting()
+        self.stop()
+
+    def starting(self):
+        while self.runs:
+            self.function(*self.args, **self.kwargs)
+            self.runs = False
+
+    def stop(self):
+        self.runs = False
 
 
 class PlotWindow(QMainWindow):
@@ -158,22 +166,14 @@ class PlotWindow(QMainWindow):
         if len(self.saveP) == 0:
             # emitir señal de cerrar ventana
             self.emit(SIGNAL('close'), self.closeEvent)
-            print 'entra'
 
-        print self.saveP
         lay.addWidget(self.saveall)
         self.saveall.clicked.connect(partial(self.save_complete, tosave))
-        print tosave
 
         self.idx = 0
 
         for p in range(0, len(self.saveP)):
-            print p
-            print self.saveP[p].clicked
-            print tosave[p]
             self.saveP[p].clicked.connect(partial(self.save, tosave[p]))
-
-        #print tosave
 
     def closeEvent(self, event):
         # Borrar carpeta temporal de gráficas
@@ -201,7 +201,7 @@ class PlotWindow(QMainWindow):
     def save(self, fname):
 
         dlg = QFileDialog().getSaveFileName(self, u'Guardar gráfica', selectedFilter='Image files (*.png)')
-        global xmlname
+
         if dlg:
             if not str(dlg).endswith('.png'):
                 dlg = os.path.splitext(str(dlg))[0] + '.png'
@@ -211,8 +211,7 @@ class PlotWindow(QMainWindow):
                 data = fr.read()
                 f.write(data)
                 QMessageBox.about(self, "OK", u"Gráfica guardada, ruta: " + str(dlg))
-                xmlname = str(dlg)
-                print xmlname
+
                 f.close()
                 fr.close()
         else:
@@ -238,7 +237,7 @@ class XmlW(QMainWindow):
         self.info.setReadOnly(True)
         self.progress = QProgressBar()
         self.btn3 = QPushButton("Ejecutar")
-        self.btn4 = QPushButton("Inicio")
+        self.btn4 = QPushButton("Reiniciar")
 
         self.grid = QGridLayout()
         self.grid.addWidget(self.load, 0, 0)
@@ -368,9 +367,11 @@ class XmlW(QMainWindow):
         self.progress.setValue(progress)
 
     def nxt(self):
-
-        self.plots = PlotWindow(self)
-        self.plots.show()
+        global p1
+        if not p1:
+            self.plots = PlotWindow(self)
+            self.plots.show()
+        p1 = True
 
         # self.exec_folds()
 
@@ -446,10 +447,10 @@ class ClassifW(QMainWindow):
 
         self.lst.setModel(proxy)
 
-        self.lst.setFixedSize(700, 100)
+        self.lst.setFixedSize(700, 90)
         self.lst2.setFixedSize(700, 90)
 
-        self.btn2 = QPushButton("Anterior")
+        self.btn2 = QPushButton("Reiniciar")
         self.btn3 = QPushButton(u"Añadir")
         self.btn4 = QPushButton("Guardar")
         self.btn5 = QPushButton("Siguiente")
@@ -473,10 +474,10 @@ class ClassifW(QMainWindow):
         self.grid.setSpacing(2)
         self.grid.addWidget(self.label, 0, 0)
         self.grid.addWidget(self.lst, 1, 0)
-        self.grid.addWidget(self.btn2, 4, 1, 1, 14)
+        self.grid.addWidget(self.btn2, 10, 1, 1, 14)
         self.grid.addWidget(self.btn3, 5, 1, 1, 14)
         self.grid.addWidget(self.btn4, 6, 1, 1, 14)
-        self.grid.addWidget(self.btn5, 9, 1, 1, 14)
+        self.grid.addWidget(self.btn5, 8, 1, 1, 14)
 
         self.grid.addWidget(self.flabel2, 5, 0, Qt.AlignLeft)
         self.grid.addWidget(self.checkmt1, 5, 0, Qt.AlignCenter)
@@ -538,6 +539,7 @@ class ClassifW(QMainWindow):
 
     def confmethods(self):
         global classif
+
         classif.append([str(self.methods.currentText()), str(self.base.currentText())])
 
         itms = self.lst.selectedIndexes()
@@ -570,6 +572,7 @@ class ClassifW(QMainWindow):
 
             # print datasets[it.row()].estratif.methods
             self.lst2.addItem(str(self.methods.currentText()) + ', ' + str(self.base.currentText()) + ' ' + str(args))
+
             self.txt.setText(u"Añadido correctamente")
 
     def signalDisable(self):
@@ -593,7 +596,7 @@ class ClassifW(QMainWindow):
         else:
             self.txt.append(text)
 
-    def getParams(self):
+    def getXml(self):
         # Para cada metodo de clasificacion elegido, tras haberlo config -> ejecutar dicha clasificacion
         global classif
 
@@ -659,13 +662,13 @@ class ClassifW(QMainWindow):
                 f.write(etree.tostring(my_tree))
                 self.txt.setText("Guardado fichero XML, ruta: " + str(dlg))
                 xmlname = str(dlg)
-                print xmlname
+                print xmlname + '\n'
+                print etree.tostring(root, pretty_print=True)
+
         else:
             print "Cancelled"
 
-        print etree.tostring(root, pretty_print=True)
-
-    #TODO definir señal para progressbar -> podemos definir señales propias solo con nombre, no llamada
+    # Definir señal para progressbar -> podemos definir señales propias solo con nombre, no llamada
     #   ejmplo: en vez de add(int), poner 'progress'
     # https://stackoverflow.com/questions/8649233/threading-it-is-not-safe-to-use-pixmaps-outside-the-gui-thread#8649257
         # self.threadPool[len(self.threadPool)-1].start()
@@ -686,6 +689,7 @@ class DatasetW(QMainWindow):
         self.label = QLabel(u"Listado de dataset cargados: ")
         self.list = QListWidget()  # Al cargar dataset, estos se añadiran a la lista
 
+        self.btn6 = QPushButton("Reiniciar")
         self.btn2 = QPushButton("Siguiente")
         self.btn3 = QPushButton("Guardar y ejecutar")
         self.btn4 = QPushButton("Borrar")
@@ -714,6 +718,7 @@ class DatasetW(QMainWindow):
         self.grid1.addWidget(self.contents, 8, 0)
         self.grid1.addWidget(self.btn3, 5, 1, 1, 14)
         self.grid1.addWidget(self.btn2, 6, 1, 1, 14)
+        self.grid1.addWidget(self.btn6, 8, 1, 1, 14)
 
         self.centralWidget().setLayout(self.grid1)
 
@@ -747,6 +752,7 @@ class DatasetW(QMainWindow):
         else:
             self.contents.append(text)
 
+    # Función para controlar la restricción de la casilla 4 en la ventana de configurar el dataset
     def restr(self):
         if self.c4.isChecked() and not self.c1.isChecked():
             self.c1.setChecked(True)
@@ -777,7 +783,6 @@ class DatasetW(QMainWindow):
         if file == '':
             file = ctrl.eventload(self)
             if not file == '':  # Se ha cancelado la operac
-                filename.append(file)
                 exists = self.list.findItems(file, Qt.MatchRegExp)
                 if not exists:
                     # self.list.addItem(file)
@@ -786,6 +791,7 @@ class DatasetW(QMainWindow):
                     self.c2.setChecked(False)
                     self.c3.setChecked(False)
                     self.c4.setChecked(False)
+
             else:
                 self.contents.append(u"Operación cancelada")
         else:
@@ -802,7 +808,15 @@ class DatasetW(QMainWindow):
 
     def partialsave(self):
         global datasets, file
+        for selected in self.list.selectedItems():
+
+            datasets[self.list.row(selected)].op1 = self.c1.isChecked()
+            datasets[self.list.row(selected)].op2 = self.c2.isChecked()
+            datasets[self.list.row(selected)].op3 = self.c3.isChecked()
+            datasets[self.list.row(selected)].op4 = self.c4.isChecked()
+
         if not file == '':
+
             exists = self.list.findItems(file, Qt.MatchRegExp)
             if not exists:
                 self.list.addItem(file)
@@ -822,16 +836,12 @@ class DatasetW(QMainWindow):
                 print 'len: '+str(len(datasets))
                 file = ''
                 self.le.setText('')
-                global b1
-                b1 = False
-                print 'file: '+file
 
             global proxy
             proxy.setSourceModel(self.list.model())
 
     def plots(self):
-        global b1
-        b1 = False
+
         if len(datasets) < 1:
             self.contents.append(u"Aviso. No se puede guardar el XML porque no hay información a guardar, "
                                  u"añada antes uno o varios datasets")
@@ -862,6 +872,7 @@ class DatasetW(QMainWindow):
             startxml = True
         else:
             print "Cancelled"
+            b1 = True
 
         print etree.tostring(my_tree, pretty_print=True)
 
@@ -880,12 +891,13 @@ class FoldsW(QMainWindow):
 
         self.lst.setFixedSize(700, 100)
 
-        self.btn2 = QPushButton("Anterior")
+        self.btn2 = QPushButton("Reiniciar")
         self.btn3 = QPushButton(u"Añadir")
         self.btn4 = QPushButton("Guardar y ejecutar")
         self.btn5 = QPushButton("Siguiente")
 
         self.flabel1 = QLabel(u"Número de folds: ")
+        self.flabel = QLabel() #hidden
         self.nlabels = QLineEdit()
 
         self.onlyInt = QIntValidator()
@@ -915,12 +927,13 @@ class FoldsW(QMainWindow):
         self.grid2.addWidget(self.checkmt2, 4, 0, Qt.AlignCenter)
         self.grid2.addWidget(self.checkmt3, 5, 0, Qt.AlignCenter)
 
-        self.grid2.addWidget(self.btn2, 5, 1, 1, 18)
         self.grid2.addWidget(self.btn3, 3, 1, 1, 18)
-        self.grid2.addWidget(self.btn4, 7, 1, 1, 18)
-        self.grid2.addWidget(self.btn5, 8, 1, 1, 18)
-        self.grid2.addWidget(self.flabel3, 8, 0, Qt.AlignLeft)
-        self.flabel3.hide()
+        self.grid2.addWidget(self.btn4, 4, 1, 1, 18)
+        self.grid2.addWidget(self.btn5, 5, 1, 1, 18)
+        self.grid2.addWidget(self.btn2, 7, 1, 1, 18)
+        self.grid2.addWidget(self.flabel, 6, 0)
+        self.grid2.addWidget(self.flabel3, 7, 0, Qt.AlignLeft)
+        self.flabel3.show()
         # self.grid2.addWidget(self.progress, 10, 0)  # , Qt.AlignLeft)
         self.centralWidget().setLayout(self.grid2)
 
@@ -1038,11 +1051,11 @@ class FoldsW(QMainWindow):
                 self.child1.set("op2", str(datasets[i].op2))
                 self.child1.set("op3", str(datasets[i].op3))
                 self.child1.set("op4", str(datasets[i].op4))
+                self.child1.set("nfolds", str(datasets[i].estratif[i].nfolds))
                 print len(datasets[i].estratif)
                 for j in range(0, len(datasets[i].estratif)):
                     self.child2 = etree.SubElement(self.child1, "estratificado")
-                    self.child2.set("filename", str(datasets[i].name))
-                    self.child2.set("nfolds", str(datasets[i].estratif[i].nfolds))
+
                     if str(datasets[i].estratif[j].id) == '0':
                         self.child2.set("m1", 'Iterative')
                     if str(datasets[i].estratif[j].id) == '1':
@@ -1071,12 +1084,10 @@ class FoldsW(QMainWindow):
                 self.flabel3.setText("Guardado fichero XML, ruta: " + str(dlg))
                 self.flabel3.show()
                 xmlname = dlg
+                print etree.tostring(my_tree, pretty_print=True)
             startxml = True
         else:
             print "Cancelled"
-
-        print etree.tostring(my_tree, pretty_print=True)
-        # TODO : Cerrar y abrir la ventana de XML
 
 
 # This is the main Window of the aplication
@@ -1112,7 +1123,7 @@ class MainApplication(QMainWindow):
 
         self.btn2.setEnabled(False)
         self.btn3.setEnabled(False)
-        #self.btn4.setEnabled(False)
+        self.btn4.setEnabled(False)
 
         self.btn1.clicked.connect(self.startDatasetTab)
         self.btn2.clicked.connect(self.startFoldsTab)
@@ -1128,12 +1139,6 @@ class MainApplication(QMainWindow):
         self.setWindowTitle(u"Herramienta para el estudio del problema "
                             u"de desequilibrio en problemas de clasificación multietiqueta")
 
-        #self.DataUI = DatasetW(self)
-        #self.FoldUI = FoldsW(self)
-        #self.ClassifUI = ClassifW(self)
-        #global xmlUI
-        #xmlUI = XmlW(self)
-
         self.loadMain()
 
     def startDatasetTab(self):
@@ -1142,19 +1147,15 @@ class MainApplication(QMainWindow):
 
         if not dsW:
             self.DataUI = DatasetW(self)
-            print 'entro'
             dsW = True
         if dsW:
 
-        # TODO: localizado el problema de abrir multiples ventanas en cargar dataset, plots etc...
-        #   es porq se generan multiples eventos y parece q no se borran al cerrar la ventana
-            self.DataUI.btn1.clicked.connect(self.clickevent1)
-            self.b1 = False
+            self.DataUI.btn1.clicked.connect(self.DataUI.getdataset)
             self.DataUI.btn2.clicked.connect(self.startFoldsTab)
             self.DataUI.btn3.clicked.connect(self.plot_xml)
-            self.b3 = False
             self.DataUI.btn4.clicked.connect(self.DataUI.deletedset)
             self.DataUI.btn5.clicked.connect(self.DataUI.partialsave)
+            self.DataUI.btn6.clicked.connect(self.restart)
 
             if not self.DataUI.isVisible():
                 self.DataUI.show()
@@ -1164,27 +1165,13 @@ class MainApplication(QMainWindow):
         if xW:
             xmlUI.close()
 
-    def clickevent1(self):
-        global b1
-        self.b1 = b1 # Al principio sera false
-        if not self.b1:
-            self.DataUI.getdataset()
-            self.b1 = True
-            b1 = self.b1
-
     def plot_xml(self):
 
-        global b1
+        self.DataUI.plots()
 
-        if not self.b3:
-            self.DataUI.plots()
-            self.b3 = True
-            b1 = self.b3
-            if startxml:
-                self.DataUI.close()
-                self.startxmlTab()
-        self.b3 = b1
-
+        if startxml:
+            self.DataUI.close()
+            self.startxmlTab()
 
     def startFoldsTab(self):
 
@@ -1194,9 +1181,10 @@ class MainApplication(QMainWindow):
             fW = True
         if fW:
             self.DataUI.hide()
+            self.btn1.setEnabled(False)
             self.btn2.setEnabled(True)
-            # self.FoldUI.btn1.clicked.connect(self.FoldUI.getdatasetFname)
-            self.FoldUI.btn2.clicked.connect(self.startDatasetTab)
+
+            self.FoldUI.btn2.clicked.connect(self.restart)
             self.FoldUI.btn3.clicked.connect(self.FoldUI.partsave)
             self.FoldUI.btn4.clicked.connect(self.fold_xml)
             self.FoldUI.btn5.clicked.connect(self.startClassifTab)
@@ -1208,7 +1196,9 @@ class MainApplication(QMainWindow):
             xmlUI.close()
 
     def fold_xml(self):
+
         self.FoldUI.folds()
+
         if startxml:
             self.FoldUI.close()
             self.startxmlTab()
@@ -1220,13 +1210,16 @@ class MainApplication(QMainWindow):
             self.ClassifUI = ClassifW(self)
             cW = True
         if cW:
-            self.FoldUI.close()
+            self.FoldUI.hide()
+            self.btn1.setEnabled(False)
+            self.btn2.setEnabled(False)
             self.btn3.setEnabled(True)
             self.btn4.setEnabled(True)
-            self.ClassifUI.btn2.clicked.connect(self.startFoldsTab)
+
+            self.ClassifUI.btn2.clicked.connect(self.restart)
             self.ClassifUI.btn3.clicked.connect(self.ClassifUI.confmethods)
             self.ClassifUI.methods.activated.connect(self.ClassifUI.signalDisable)
-            self.ClassifUI.btn4.clicked.connect(self.ClassifUI.getParams)
+            self.ClassifUI.btn4.clicked.connect(self.ClassifUI.getXml)
             self.ClassifUI.btn5.clicked.connect(self.startxmlTab)
             self.ClassifUI.show()
         if xW:
@@ -1234,29 +1227,76 @@ class MainApplication(QMainWindow):
 
     def startxmlTab(self):
 
-        global xW
+        global xW, dsW, fW, cW
         if not xW:
             global xmlUI
             xmlUI = XmlW(self)
             xW = True
 
+        #TODO: revisar esto y descomentarlo si es necesario tenerlo
         if xmlname == '':
             # Guardar las ops antes d camb d ventana
-            self.ClassifUI.getParams()
+            self.ClassifUI.getXml()
         if dsW:
             self.DataUI.close()
+            dsW=False
         if fW:
             self.FoldUI.close()
+            fw=False
         if cW:
             self.ClassifUI.close()
+            cW=False
 
         if xW:
+            self.btn1.setEnabled(False)
+            self.btn2.setEnabled(False)
+            self.btn3.setEnabled(False)
             self.btn4.setEnabled(True)
             xmlUI.load.setText(xmlname)
             xmlUI.btn1.clicked.connect(xmlUI.getxmlfile)
             xmlUI.btn2.clicked.connect(xmlUI.getWorkingDir)
             xmlUI.btn3.clicked.connect(xmlUI.execute)
+            xmlUI.btn4.clicked.connect(self.restart)
             xmlUI.show()
+
+    def restart(self):
+        global file, text, nfolds, classif, dir, xmlname, datasets, xmlUI, dsW, fW, cW, xW
+
+        if os.path.isdir(dir+'/tmp/'): #TODO: revisar si lo dejamos asi y ctrl errores en plotwindow
+            shutil.rmtree(dir+'/tmp/')
+
+        if dsW:
+            # La ventana de Dataset está/ha estado abierta
+            self.DataUI.close()
+
+        if fW:
+            self.FoldUI.close()
+
+        if xW:
+            xmlUI.close()
+            for i in range(0, len(xmlUI.threadPool)):
+                xmlUI.threadPool[i].stop()
+
+        if cW:
+            self.classifUI.close()
+
+        self.btn1.setEnabled(True)
+        self.btn2.setEnabled(False)
+        self.btn3.setEnabled(False)
+        self.btn4.setEnabled(False)
+        file = ''
+        text = str('')
+        nfolds = 0
+        classif = []
+        dir = './'
+        xmlname = ''
+        datasets = []  # Contendra elems de la clase dset, estratif y metodo
+        xmlUI = None
+
+        dsW = False
+        fW = False
+        cW = False
+        xW = False
 
     def closeEvent(self, event):  # Redefinimos el evento de cierre (pedir confirmacion)
 

@@ -18,6 +18,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, Image, Table, KeepTogether
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
+from datetime import datetime
 
 gk = 5
 gn_neighbors = 5
@@ -45,49 +46,53 @@ def savedir(self):
 
 
 def execute_dset(self, fname, dir):
-    tree = etree.parse(str(fname))
-    txt = etree.tostring(tree.getroot(), pretty_print=True)
+
     fileds = []
     op1 = []
     op2 = []
     op3 = []
     op4 = []
     dsactive = 0
-    if tree.findall('dataset'):
-        time.sleep(0.2)
-        self.emit(SIGNAL('textoinf'), 'Head')
-    for name in tree.findall('dataset'):
-        if name.get('filename'):
-            self.emit(SIGNAL('textoinf'), '>Dataset: ' + str(name.get('filename')))
-            fileds.append(str(name.get('filename')))
-        if name.get('op1'):
-            self.emit(SIGNAL('textoinf'), 'op1')
-            op1.append(str(name.get('op1')))
-            dsactive = 1
-        else:
-            op1.append(str(False))
-        if name.get('op2'):
-            self.emit(SIGNAL('textoinf'), 'op2')
-            dsactive = 1
-            op2.append(str(name.get('op2')))
-        else:
-            op2.append(str(False))
-        if name.get('op3'):
-            self.emit(SIGNAL('textoinf'), 'op3')
-            dsactive = 1
-            op3.append(str(name.get('op3')))
-        else:
-            op3.append(str(False))
-        if name.get('op4'):
-            self.emit(SIGNAL('textoinf'), 'op4')
-            dsactive = 1
-            op4.append(str(name.get('op4')))
-        else:
-            op4.append(str(False))
+
+    if not str(fname) == '':
+        tree = etree.parse(str(fname))
+        txt = etree.tostring(tree.getroot(), pretty_print=True)
+
+        if tree.findall('dataset'):
+            time.sleep(0.2)
+            self.emit(SIGNAL('textoinf'), 'Head')
+        for name in tree.findall('dataset'):
+            if name.get('filename'):
+                self.emit(SIGNAL('textoinf'), '>Dataset: ' + str(name.get('filename')))
+                fileds.append(str(name.get('filename')))
+            if name.get('op1'):
+                self.emit(SIGNAL('textoinf'), 'op1')
+                op1.append(str(name.get('op1')))
+                dsactive = 1
+            else:
+                op1.append(str(False))
+            if name.get('op2'):
+                self.emit(SIGNAL('textoinf'), 'op2')
+                dsactive = 1
+                op2.append(str(name.get('op2')))
+            else:
+                op2.append(str(False))
+            if name.get('op3'):
+                self.emit(SIGNAL('textoinf'), 'op3')
+                dsactive = 1
+                op3.append(str(name.get('op3')))
+            else:
+                op3.append(str(False))
+            if name.get('op4'):
+                self.emit(SIGNAL('textoinf'), 'op4')
+                dsactive = 1
+                op4.append(str(name.get('op4')))
+            else:
+                op4.append(str(False))
 
     if dsactive == 1:
-
-        doc = SimpleDocTemplate(dir + '/' + "plot-report.pdf")
+        tstamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        doc = SimpleDocTemplate(dir + '/' + str(tstamp)+"_plot-report.pdf")
         styles = getSampleStyleSheet()
         parts = []
         for i in range(0, len(fileds)):
@@ -192,12 +197,13 @@ def execute_dset(self, fname, dir):
                 parts.append(PageBreak())
 
         doc.build(parts)
-        self.emit(SIGNAL('textoinf'), '\nInforme PDF generado, puede consultarlo en: ' + dir + '/' + "plot-report.pdf")
+        self.emit(SIGNAL('textoinf'), '\nInforme PDF generado, puede consultarlo en: ' + dir + '/' + str(tstamp)+"_plot-report.pdf")
 
     self.emit(SIGNAL('finished'))
 
 
 def execute_folds(self, fname, dir):
+
     tree = etree.parse(str(fname))
     filef = []
     nfls = []
@@ -205,30 +211,33 @@ def execute_folds(self, fname, dir):
     m2 = []
     m3 = []
     factive = 0
-    if tree.findall('.//estratificado'):
-        time.sleep(1)
-        self.emit(SIGNAL('add(QString)'), 'Head')
-    for name in tree.iter():
-        if name.get('filename'):
-            self.emit(SIGNAL('add(QString)'), '\n>Dataset: ' + str(name.get('filename')))
-            filef.append(str(name.get('filename')))
+
+    if not str(fname) == '':
+        print 'estoy entrando... foolds'
+        if tree.findall('.//estratificado'):
             time.sleep(1)
-        if name.get('nfolds'):
-            self.emit(SIGNAL('add(QString)'), '>nfolds: ' + str(name.get('nfolds')))
-            factive = 1
-            nfls.append(int(name.get('nfolds')))
-        if name.get('m1'):
-            self.emit(SIGNAL('add(QString)'), str(name.get('m1')))
-            factive = 1
-            m1.append(str(name.get('m1')))
-        if name.get('m2'):
-            self.emit(SIGNAL('add(QString)'), str(name.get('m2')))
-            factive = 1
-            m2.append(str(name.get('m2')))
-        if name.get('m3'):
-            self.emit(SIGNAL('add(QString)'), str(name.get('m3')))
-            factive = 1
-            m3.append(str(name.get('m3')))
+            self.emit(SIGNAL('add(QString)'), 'Head')
+        for name in tree.iter():
+            if name.get('filename'):
+                self.emit(SIGNAL('add(QString)'), '\n>Dataset: ' + str(name.get('filename')))
+                filef.append(str(name.get('filename')))
+                time.sleep(1)
+            if name.get('nfolds'):
+                self.emit(SIGNAL('add(QString)'), '>nfolds: ' + str(name.get('nfolds')))
+                factive = 1
+                nfls.append(int(name.get('nfolds')))
+            if name.get('m1'):
+                self.emit(SIGNAL('add(QString)'), str(name.get('m1')))
+                factive = 1
+                m1.append(str(name.get('m1')))
+            if name.get('m2'):
+                self.emit(SIGNAL('add(QString)'), str(name.get('m2')))
+                factive = 1
+                m2.append(str(name.get('m2')))
+            if name.get('m3'):
+                self.emit(SIGNAL('add(QString)'), str(name.get('m3')))
+                factive = 1
+                m3.append(str(name.get('m3')))
 
     if factive == 1:
         while True:
@@ -265,7 +274,7 @@ def execute_folds(self, fname, dir):
 
 
 def execute_class(self, fname, dir):
-    tree = etree.parse(str(fname))
+
     clasactive = 0
     fclass = []
     stratif = []
@@ -283,84 +292,89 @@ def execute_class(self, fname, dir):
     call = []
     parms = []
     estratificado = ''
-    print '-----------------------------------------'
-    if tree.findall('.//metodo'):
-        time.sleep(1)
-        self.emit(SIGNAL('infoclassif'), 'Head')
-    for name in tree.iter():
-        if name.get('filename'):
-            self.emit(SIGNAL('infoclassif'), '\n>Dataset: ' + str(name.get('filename')))
-            fclass.append(str(name.get('filename')))
-            clasactive = 1
+
+    if not str(fname)=='':
+        tree = etree.parse(str(fname))
+
+        print 'estoy entrando... classif'
+        if tree.findall('.//metodo'):
             time.sleep(1)
-        if name.get('nfolds'):
-            self.emit(SIGNAL('infoclassif'), '>nfolds: ' + str(name.get('nfolds')))
-            nflds.append(int(name.get('nfolds')))
-        if name.get('m1'):
-            self.emit(SIGNAL('infoclassif'), '\n>Estratificado: ' + str(name.get('m1')))
-            estratificado = 'Iterative'
-        if name.get('m2'):
-            self.emit(SIGNAL('infoclassif'), '\n>Estratificado: ' + str(name.get('m2')))
-            estratificado = 'Random'
-        if name.get('m3'):
-            self.emit(SIGNAL('infoclassif'), '\n>Estratificado: ' + str(name.get('m3')))
-            estratificado = 'Labelset'
-        if name.tag == 'metodo':
-            if name.get('method'):
-                self.emit(SIGNAL('infoclassif'), '>>Algoritmo: ' + str(name.get('method')))
-                meths.append(str(name.get('method')))
-                stratif.append(str(estratificado))
+            self.emit(SIGNAL('infoclassif'), 'Head')
+        for name in tree.iter():
+            if name.get('filename'):
+                self.emit(SIGNAL('infoclassif'), '\n>Dataset: ' + str(name.get('filename')))
+                fclass.append(str(name.get('filename')))
                 clasactive = 1
-            if name.get('cbase'):
-                if not name.get('cbase') == '-':
-                    self.emit(SIGNAL('infoclassif'), u'>>Clasificador base: ' + str(name.get('cbase')))
-                csbase.append(str(name.get('cbase')))
-                clasactive = 1
-            if name.get('args'):
-                print csbase[(len(csbase) - 1)]
-                if csbase[(-1)] == 'kNN':
-                    n = name.get('args')[2:-2]
-                    self.emit(SIGNAL('infoclassif'), u'    n_neighbors: ' + str(n))
-                    n_neighbors.append(str(n))
-                else:
-                    n_neighbors.append('0')
-                if csbase[(-1)] == 'SVM':
-                    st = name.get('args')[2:-2].split(',')
-                    print st[0], st[1], st[2]
-                    self.emit(SIGNAL('infoclassif'), u'    kernel: ' + str(st[0]))
-                    self.emit(SIGNAL('infoclassif'), u'    C: ' + str(st[1]))
-                    self.emit(SIGNAL('infoclassif'), u'    gamma: ' + str(st[2]))
-                    kernel.append(str(st[0]))
-                    C.append(str(st[1]))
-                    gamma.append(str(st[2]).strip())
-                else:
-                    kernel.append('0')
-                    C.append('0')
-                    gamma.append('0')
-                if meths[(len(meths) - 1)] == 'MlKNN':
-                    n = name.get('args')[2:-2]
-                    self.emit(SIGNAL('infoclassif'), u'    k: ' + str(n))
-                    k.append(str(n))
-                else:
-                    k.append('0')
-                if csbase[(-1)] == 'Random Forests':
-                    st = name.get('args')[2:-2].split(',')
-                    print st[0], st[1]
-                    self.emit(SIGNAL('infoclassif'), u'    n_estimators: ' + str(st[0]))
-                    self.emit(SIGNAL('infoclassif'), u'    criterion_rf: ' + str(st[1]))
-                    n_estimators.append(str(st[0]))
-                    criterion_rf.append(str(st[1]).strip())
-                else:
-                    n_estimators.append('0')
-                    criterion_rf.append('0')
-                if csbase[(-1)] == 'Decision Tree':
-                    n = name.get('args')[2:-2]
-                    self.emit(SIGNAL('infoclassif'), u'    criterion_dt: ' + str(n))
-                    criterion_dt.append(str(n))
-                else:
-                    criterion_dt.append('0')
+                time.sleep(1)
+            if name.get('nfolds'):
+                self.emit(SIGNAL('infoclassif'), '>nfolds: ' + str(name.get('nfolds')))
+                nflds.append(int(name.get('nfolds')))
+            if name.get('m1'):
+                self.emit(SIGNAL('infoclassif'), '\n>Estratificado: ' + str(name.get('m1')))
+                estratificado = 'Iterative'
+            if name.get('m2'):
+                self.emit(SIGNAL('infoclassif'), '\n>Estratificado: ' + str(name.get('m2')))
+                estratificado = 'Random'
+            if name.get('m3'):
+                self.emit(SIGNAL('infoclassif'), '\n>Estratificado: ' + str(name.get('m3')))
+                estratificado = 'Labelset'
+            if name.tag == 'metodo':
+                if name.get('method'):
+                    self.emit(SIGNAL('infoclassif'), '>>Algoritmo: ' + str(name.get('method')))
+                    meths.append(str(name.get('method')))
+                    stratif.append(str(estratificado))
+                    clasactive = 1
+                if name.get('cbase'):
+                    if not name.get('cbase') == '-':
+                        self.emit(SIGNAL('infoclassif'), u'>>Clasificador base: ' + str(name.get('cbase')))
+                    csbase.append(str(name.get('cbase')))
+                    clasactive = 1
+                if name.get('args'):
+                    print csbase[(len(csbase) - 1)]
+                    if csbase[(-1)] == 'kNN':
+                        n = name.get('args')[2:-2]
+                        self.emit(SIGNAL('infoclassif'), u'    n_neighbors: ' + str(n))
+                        n_neighbors.append(str(n))
+                    else:
+                        n_neighbors.append('0')
+                    if csbase[(-1)] == 'SVM':
+                        st = name.get('args')[2:-2].split(',')
+                        print st[0], st[1], st[2]
+                        self.emit(SIGNAL('infoclassif'), u'    kernel: ' + str(st[0]))
+                        self.emit(SIGNAL('infoclassif'), u'    C: ' + str(st[1]))
+                        self.emit(SIGNAL('infoclassif'), u'    gamma: ' + str(st[2]))
+                        kernel.append(str(st[0]))
+                        C.append(str(st[1]))
+                        gamma.append(str(st[2]).strip())
+                    else:
+                        kernel.append('0')
+                        C.append('0')
+                        gamma.append('0')
+                    if meths[(len(meths) - 1)] == 'MlKNN':
+                        n = name.get('args')[2:-2]
+                        self.emit(SIGNAL('infoclassif'), u'    k: ' + str(n))
+                        k.append(str(n))
+                    else:
+                        k.append('0')
+                    if csbase[(-1)] == 'Random Forests':
+                        st = name.get('args')[2:-2].split(',')
+                        print st[0], st[1]
+                        self.emit(SIGNAL('infoclassif'), u'    n_estimators: ' + str(st[0]))
+                        self.emit(SIGNAL('infoclassif'), u'    criterion_rf: ' + str(st[1]))
+                        n_estimators.append(str(st[0]))
+                        criterion_rf.append(str(st[1]).strip())
+                    else:
+                        n_estimators.append('0')
+                        criterion_rf.append('0')
+                    if csbase[(-1)] == 'Decision Tree':
+                        n = name.get('args')[2:-2]
+                        self.emit(SIGNAL('infoclassif'), u'    criterion_dt: ' + str(n))
+                        criterion_dt.append(str(n))
+                    else:
+                        criterion_dt.append('0')
 
     if clasactive == 1:
+        print 'estoy para clasificar.....'
         for i in range(0, len(fclass)):
             for j in range(0, len(meths)):
                 if meths[j] == 'Binary Relevance':

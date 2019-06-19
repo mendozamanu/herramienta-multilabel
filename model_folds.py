@@ -326,6 +326,7 @@ def gen_folds(self, nfolds, fname, dir, mk1, mk2, mk3):
                     self.emit(SIGNAL('add(QString)'), u"Hecho!")
                 else:
                     self.emit(SIGNAL('add(QString)'), u">Las particiones iterativas solicitadas ya existen")
+                    self.emit(SIGNAL('update(int)'), 100)
 
             if mk2:
                 #tmp = self.checkmt2.text()
@@ -338,6 +339,7 @@ def gen_folds(self, nfolds, fname, dir, mk1, mk2, mk3):
                     self.emit(SIGNAL('add(QString)'), u"Hecho!")
                 else:
                     self.emit(SIGNAL('add(QString)'), u">Las particiones aleatorias solicitadas ya existen")
+                    self.emit(SIGNAL('update(int)'), 100)
 
             if mk3:
                 #tmp = self.checkmt3.text()
@@ -351,6 +353,7 @@ def gen_folds(self, nfolds, fname, dir, mk1, mk2, mk3):
                     self.emit(SIGNAL('add(QString)'), u"Hecho!")
                 else:
                     self.emit(SIGNAL('add(QString)'), u">Las particiones labelset solicitadas ya existen")
+                    self.emit(SIGNAL('update(int)'), 100)
 
             if (mk1 is False) and (mk2 is False) and (mk3 is False):
                 self.emit(SIGNAL('add(QString)'), 'Info1')

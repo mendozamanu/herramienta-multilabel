@@ -65,25 +65,29 @@ def execute_dset(self, fname, dir):
             if name.get('filename'):
                 self.emit(SIGNAL('textoinf'), '>Dataset: ' + str(name.get('filename')))
                 fileds.append(str(name.get('filename')))
-            if name.get('op1'):
+            if name.get('op1') == 'True':
+
                 self.emit(SIGNAL('textoinf'), 'op1')
                 op1.append(str(name.get('op1')))
                 dsactive = 1
             else:
                 op1.append(str(False))
-            if name.get('op2'):
+            if name.get('op2') == 'True':
+
                 self.emit(SIGNAL('textoinf'), 'op2')
                 dsactive = 1
                 op2.append(str(name.get('op2')))
             else:
                 op2.append(str(False))
-            if name.get('op3'):
+            if name.get('op3') == 'True':
+
                 self.emit(SIGNAL('textoinf'), 'op3')
                 dsactive = 1
                 op3.append(str(name.get('op3')))
             else:
                 op3.append(str(False))
-            if name.get('op4'):
+            if name.get('op4') == 'True':
+
                 self.emit(SIGNAL('textoinf'), 'op4')
                 dsactive = 1
                 op4.append(str(name.get('op4')))
@@ -95,11 +99,24 @@ def execute_dset(self, fname, dir):
         doc = SimpleDocTemplate(dir + '/' + str(tstamp)+"_plot-report.pdf")
         styles = getSampleStyleSheet()
         parts = []
+        save = str(dir) + '/' + 'tmp/'
+        print save
+        print fileds[0]
         for i in range(0, len(fileds)):
+            cnt = 0
+            if not op1[i] == 'False':
+                cnt+=1
+            if not op2[i] == 'False':
+                cnt += 1
+            if not op3[i] == 'False':
+                cnt += 1
+            if not op4[i] == 'False':
+                cnt += 1
+
+            self.emit(SIGNAL('prog1'), 0)
             tmp = os.path.basename(str(fileds[i]))
             dat = os.path.splitext(tmp)[0]
 
-            save = str(dir) + '/' + 'tmp/'
             if not os.path.exists(save):
                 os.makedirs(save)
 
@@ -109,96 +126,114 @@ def execute_dset(self, fname, dir):
             parts.append(p)
 
             self.emit(SIGNAL('textoinf'), 'INFO1')
-
+            prog = 100 / cnt
             if not op1[i] == 'False':
+
                 df = md.convert(self, fileds[i], dir)
+                self.emit(SIGNAL('prog1'), prog/2)
+
                 report, insts = md.cardinality(self, df)
+                self.emit(SIGNAL('prog1'), prog)
 
                 parts.append(Spacer(1, 0.2 * inch))
                 p = Paragraph(u"Medidas: ", styles["Heading2"])
                 parts.append(p)
 
-                fo = open(report, 'r')
+                if os.path.isfile(report):
+                    fo = open(report, 'r')
 
-                headers = []
-                data = []
+                    headers = []
+                    data = []
 
-                for o in range(0, 6):
-                    inline = fo.readline()
-                    part = inline.split(': ')
+                    for o in range(0, 6):
+                        inline = fo.readline()
+                        part = inline.split(': ')
 
-                    if part[0] == 'Instances':
-                        headers.append(u"Nº de instancias")
-                        data.append(str(part[1]).strip('\n'))
+                        if part[0] == 'Instances':
+                            headers.append(u"Nº de instancias")
+                            data.append(str(part[1]).strip('\n'))
 
-                    if part[0] == 'Features':
-                        headers.append(u"Nº de características")
-                        data.append(str(part[1]).strip('\n'))
+                        if part[0] == 'Features':
+                            headers.append(u"Nº de características")
+                            data.append(str(part[1]).strip('\n'))
 
-                    if part[0] == 'Labels':
-                        headers.append(u"Nº de etiquetas")
-                        data.append(str(part[1]).strip('\n'))
+                        if part[0] == 'Labels':
+                            headers.append(u"Nº de etiquetas")
+                            data.append(str(part[1]).strip('\n'))
 
-                    if part[0] == 'Cardinality':
-                        headers.append(u"Cardinalidad")
-                        data.append(str(part[1]).strip('\n'))
+                        if part[0] == 'Cardinality':
+                            headers.append(u"Cardinalidad")
+                            data.append(str(part[1]).strip('\n'))
 
-                    if part[0] == 'Density':
-                        headers.append(u"Densidad de etiquetas")
-                        data.append(str(part[1]).strip('\n'))
+                        if part[0] == 'Density':
+                            headers.append(u"Densidad de etiquetas")
+                            data.append(str(part[1]).strip('\n'))
 
-                    if part[0] == 'Distinct':
-                        headers.append(u"Nº de combinaciones de etiquetas distintas")
-                        data.append(str(part[1]).strip('\n'))
+                        if part[0] == 'Distinct':
+                            headers.append(u"Nº de combinaciones de etiquetas distintas")
+                            data.append(str(part[1]).strip('\n'))
 
-                parts.append(Spacer(1, 0.4 * inch))
-                tmp = []
-                for l in range(0, 6):
-                    tmp.append(headers[l:l+1] + data[l:l+1])
+                    parts.append(Spacer(1, 0.4 * inch))
+                    tmp = []
+                    for l in range(0, 6):
+                        tmp.append(headers[l:l+1] + data[l:l+1])
 
-                print tmp
+                    print tmp
 
-                t = Table(tmp, rowHeights=(10*mm, 10*mm, 10*mm, 10*mm, 10*mm, 10*mm), colWidths=(70*mm, 60*mm),
-                          style=[('GRID',(0,0),(-1,-1),0.5,colors.black), ('BACKGROUND', (0, 0), (0, -1), colors.silver),
-                                ('ALIGN',(0,0),(-1,-1),'CENTER'), ('VALIGN',(0,0),(-1,-1),'MIDDLE'),
-                                ])
-                parts.append(t)
-                parts.append(Spacer(1, 0.2 * inch))
+                    t = Table(tmp, rowHeights=(10*mm, 10*mm, 10*mm, 10*mm, 10*mm, 10*mm), colWidths=(70*mm, 60*mm),
+                              style=[('GRID',(0,0),(-1,-1),0.5,colors.black), ('BACKGROUND', (0, 0), (0, -1), colors.silver),
+                                    ('ALIGN',(0,0),(-1,-1),'CENTER'), ('VALIGN',(0,0),(-1,-1),'MIDDLE'),
+                                    ])
+                    parts.append(t)
+                    parts.append(Spacer(1, 0.2 * inch))
 
-                parts.append(PageBreak())
+                    parts.append(PageBreak())
 
             if not op2[i] == 'False':
+                prog += prog
                 md.coov(self, fileds[i], dir, True, False)
+                self.emit(SIGNAL('prog1'), prog)
 
-                parts.append(Spacer(1, 0.2 * inch))
-                p = Paragraph(u"Gráfica de correlación entre etiquetas", styles["Heading2"])
-                parts.append(p)
+                if os.path.isfile(save + dat + '_corrlabls.png'):
+                    parts.append(Spacer(1, 0.2 * inch))
+                    p = Paragraph(u"Gráfica de correlación entre etiquetas", styles["Heading2"])
+                    parts.append(p)
 
-                parts.append(Image(save + dat + '_corrlabls.png'))
-                parts.append(PageBreak())
+                    parts.append(Image(save + dat + '_corrlabls.png'))
+                    parts.append(PageBreak())
 
             if not op3[i] == 'False':
+                prog += prog
                 md.coov(self, fileds[i], dir, False, True)
+                self.emit(SIGNAL('prog1'), prog)
 
-                parts.append(Spacer(1, 0.2 * inch))
-                p = Paragraph(u"Gráfica de distribucion de la correlación", styles["Heading2"])
-                parts.append(p)
+                if os.path.isfile(save + dat + '_corrordered.png'):
+                    parts.append(Spacer(1, 0.2 * inch))
+                    p = Paragraph(u"Gráfica de distribucion de la correlación", styles["Heading2"])
+                    parts.append(p)
 
-                parts.append(Image(save + dat + '_corrordered.png'))
-                parts.append(PageBreak())
+                    parts.append(Image(save + dat + '_corrordered.png'))
+                    parts.append(PageBreak())
             if not op4[i] == 'False':
+                prog += prog
                 md.labfrecplot(insts, fileds[i], dir)
+                self.emit(SIGNAL('prog1'), prog)
 
-                parts.append(Spacer(1, 0.2 * inch))
-                p = Paragraph(u"Gráfica de frecuencia de las etiquetas", styles["Heading2"])
-                parts.append(p)
+                if os.path.isfile(save + dat + '_freclbs.png'):
 
-                parts.append(Image(save + dat + '_freclbs.png', width=640, height=480, kind='proportional'))
-                parts.append(PageBreak())
+                    parts.append(Spacer(1, 0.2 * inch))
+                    p = Paragraph(u"Gráfica de frecuencia de las etiquetas", styles["Heading2"])
+                    parts.append(p)
 
-        doc.build(parts)
-        self.emit(SIGNAL('textoinf'), '\nInforme PDF generado, puede consultarlo en: ' + dir + '/' + str(tstamp)+"_plot-report.pdf")
+                    parts.append(Image(save + dat + '_freclbs.png', width=640, height=480, kind='proportional'))
+                    parts.append(PageBreak())
 
+        if os.path.exists(save):
+            doc.build(parts)
+        self.emit(SIGNAL('textoinf'), '\nInforme PDF generado, puede consultarlo en: ' + dir + '/' +
+                  str(tstamp)+"_plot-report.pdf\n")
+
+    self.emit(SIGNAL('prog1'), 100)
     self.emit(SIGNAL('finished'))
 
 
@@ -217,27 +252,31 @@ def execute_folds(self, fname, dir):
         if tree.findall('.//estratificado'):
             time.sleep(1)
             self.emit(SIGNAL('add(QString)'), 'Head')
-        for name in tree.iter():
-            if name.get('filename'):
-                self.emit(SIGNAL('add(QString)'), '\n>Dataset: ' + str(name.get('filename')))
-                filef.append(str(name.get('filename')))
-                time.sleep(1)
-            if name.get('nfolds'):
-                self.emit(SIGNAL('add(QString)'), '>nfolds: ' + str(name.get('nfolds')))
-                factive = 1
-                nfls.append(int(name.get('nfolds')))
-            if name.get('m1'):
-                self.emit(SIGNAL('add(QString)'), str(name.get('m1')))
-                factive = 1
-                m1.append(str(name.get('m1')))
-            if name.get('m2'):
-                self.emit(SIGNAL('add(QString)'), str(name.get('m2')))
-                factive = 1
-                m2.append(str(name.get('m2')))
-            if name.get('m3'):
-                self.emit(SIGNAL('add(QString)'), str(name.get('m3')))
-                factive = 1
-                m3.append(str(name.get('m3')))
+
+            for name in tree.iter():
+                if name.get('filename'):
+                    self.emit(SIGNAL('add(QString)'), '\n>Dataset: ' + str(name.get('filename')))
+                    filef.append(str(name.get('filename')))
+                    time.sleep(1)
+                if name.get('nfolds'):
+                    self.emit(SIGNAL('add(QString)'), '>nfolds: ' + str(name.get('nfolds')))
+                    factive = 1
+                    nfls.append(int(name.get('nfolds')))
+                if name.get('m1'):
+                    self.emit(SIGNAL('add(QString)'), str(name.get('m1')))
+                    factive = 1
+                    m1.append(str(name.get('m1')))
+                if name.get('m2'):
+                    self.emit(SIGNAL('add(QString)'), str(name.get('m2')))
+                    factive = 1
+                    m2.append(str(name.get('m2')))
+                if name.get('m3'):
+                    self.emit(SIGNAL('add(QString)'), str(name.get('m3')))
+                    factive = 1
+                    m3.append(str(name.get('m3')))
+        else:
+            print 'terminado - paso no activado'
+            self.emit(SIGNAL('update(int)'), 100)
 
     if factive == 1:
         while True:
@@ -259,15 +298,17 @@ def execute_folds(self, fname, dir):
                 break
 
         for i in range(0, len(filef)):
-            print 'n folds a generar: ' + str(nfls[i])
             suffix = os.path.basename(str(filef[i]))
             suffix = os.path.splitext(suffix)[0]
             self.emit(SIGNAL('add(QString)'), '\n>Dataset: ' + str(suffix))
-            if m1[i] is not '0':
+            if not m1[i] == '0':
+                self.emit(SIGNAL('add(int)'), 0)
                 mf.gen_folds(self, nfls[i], filef[i], dir, True, False, False)
-            if m2[i] is not '0':
+            if not m2[i] == '0':
+                self.emit(SIGNAL('add(int)'), 0)
                 mf.gen_folds(self, nfls[i], filef[i], dir, False, True, False)
-            if m3[i] is not '0':
+            if not m3[i] == '0':
+                self.emit(SIGNAL('add(int)'), 0)
                 mf.gen_folds(self, nfls[i], filef[i], dir, False, False, True)
 
     self.emit(SIGNAL('end'))
@@ -293,85 +334,90 @@ def execute_class(self, fname, dir):
     parms = []
     estratificado = ''
 
-    if not str(fname)=='':
+    if not str(fname) == '':
         tree = etree.parse(str(fname))
 
         print 'estoy entrando... classif'
         if tree.findall('.//metodo'):
             time.sleep(1)
             self.emit(SIGNAL('infoclassif'), 'Head')
-        for name in tree.iter():
-            if name.get('filename'):
-                self.emit(SIGNAL('infoclassif'), '\n>Dataset: ' + str(name.get('filename')))
-                fclass.append(str(name.get('filename')))
-                clasactive = 1
-                time.sleep(1)
-            if name.get('nfolds'):
-                self.emit(SIGNAL('infoclassif'), '>nfolds: ' + str(name.get('nfolds')))
-                nflds.append(int(name.get('nfolds')))
-            if name.get('m1'):
-                self.emit(SIGNAL('infoclassif'), '\n>Estratificado: ' + str(name.get('m1')))
-                estratificado = 'Iterative'
-            if name.get('m2'):
-                self.emit(SIGNAL('infoclassif'), '\n>Estratificado: ' + str(name.get('m2')))
-                estratificado = 'Random'
-            if name.get('m3'):
-                self.emit(SIGNAL('infoclassif'), '\n>Estratificado: ' + str(name.get('m3')))
-                estratificado = 'Labelset'
-            if name.tag == 'metodo':
-                if name.get('method'):
-                    self.emit(SIGNAL('infoclassif'), '>>Algoritmo: ' + str(name.get('method')))
-                    meths.append(str(name.get('method')))
-                    stratif.append(str(estratificado))
+            for name in tree.iter():
+                if name.get('filename'):
+                    self.emit(SIGNAL('infoclassif'), '\n>Dataset: ' + str(name.get('filename')))
+                    fclass.append(str(name.get('filename')))
                     clasactive = 1
-                if name.get('cbase'):
-                    if not name.get('cbase') == '-':
-                        self.emit(SIGNAL('infoclassif'), u'>>Clasificador base: ' + str(name.get('cbase')))
-                    csbase.append(str(name.get('cbase')))
-                    clasactive = 1
-                if name.get('args'):
-                    print csbase[(len(csbase) - 1)]
-                    if csbase[(-1)] == 'kNN':
-                        n = name.get('args')[2:-2]
-                        self.emit(SIGNAL('infoclassif'), u'    n_neighbors: ' + str(n))
-                        n_neighbors.append(str(n))
-                    else:
-                        n_neighbors.append('0')
-                    if csbase[(-1)] == 'SVM':
-                        st = name.get('args')[2:-2].split(',')
-                        print st[0], st[1], st[2]
-                        self.emit(SIGNAL('infoclassif'), u'    kernel: ' + str(st[0]))
-                        self.emit(SIGNAL('infoclassif'), u'    C: ' + str(st[1]))
-                        self.emit(SIGNAL('infoclassif'), u'    gamma: ' + str(st[2]))
-                        kernel.append(str(st[0]))
-                        C.append(str(st[1]))
-                        gamma.append(str(st[2]).strip())
-                    else:
-                        kernel.append('0')
-                        C.append('0')
-                        gamma.append('0')
-                    if meths[(len(meths) - 1)] == 'MlKNN':
-                        n = name.get('args')[2:-2]
-                        self.emit(SIGNAL('infoclassif'), u'    k: ' + str(n))
-                        k.append(str(n))
-                    else:
-                        k.append('0')
-                    if csbase[(-1)] == 'Random Forests':
-                        st = name.get('args')[2:-2].split(',')
-                        print st[0], st[1]
-                        self.emit(SIGNAL('infoclassif'), u'    n_estimators: ' + str(st[0]))
-                        self.emit(SIGNAL('infoclassif'), u'    criterion_rf: ' + str(st[1]))
-                        n_estimators.append(str(st[0]))
-                        criterion_rf.append(str(st[1]).strip())
-                    else:
-                        n_estimators.append('0')
-                        criterion_rf.append('0')
-                    if csbase[(-1)] == 'Decision Tree':
-                        n = name.get('args')[2:-2]
-                        self.emit(SIGNAL('infoclassif'), u'    criterion_dt: ' + str(n))
-                        criterion_dt.append(str(n))
-                    else:
-                        criterion_dt.append('0')
+                    time.sleep(1)
+                if name.get('nfolds'):
+                    self.emit(SIGNAL('infoclassif'), '>nfolds: ' + str(name.get('nfolds')))
+                    nflds.append(int(name.get('nfolds')))
+                if name.get('m1'):
+                    self.emit(SIGNAL('infoclassif'), '\n>Estratificado: ' + str(name.get('m1')))
+                    estratificado = 'Iterative'
+                if name.get('m2'):
+                    self.emit(SIGNAL('infoclassif'), '\n>Estratificado: ' + str(name.get('m2')))
+                    estratificado = 'Random'
+                if name.get('m3'):
+                    self.emit(SIGNAL('infoclassif'), '\n>Estratificado: ' + str(name.get('m3')))
+                    estratificado = 'Labelset'
+                if name.tag == 'metodo':
+                    if name.get('method'):
+                        self.emit(SIGNAL('infoclassif'), '>>Algoritmo: ' + str(name.get('method')))
+                        meths.append(str(name.get('method')))
+                        stratif.append(str(estratificado))
+                        clasactive = 1
+                    if name.get('cbase'):
+                        if not name.get('cbase') == '-':
+                            self.emit(SIGNAL('infoclassif'), u'>>Clasificador base: ' + str(name.get('cbase')))
+                        csbase.append(str(name.get('cbase')))
+                        clasactive = 1
+                    if name.get('args'):
+                        print csbase[(len(csbase) - 1)]
+                        if csbase[(-1)] == 'kNN':
+                            n = name.get('args')[2:-2]
+                            self.emit(SIGNAL('infoclassif'), u'    n_neighbors: ' + str(n))
+                            n_neighbors.append(str(n))
+                        else:
+                            n_neighbors.append('0')
+                        if csbase[(-1)] == 'SVM':
+                            st = name.get('args')[2:-2].split(',')
+                            print st[0], st[1], st[2]
+                            self.emit(SIGNAL('infoclassif'), u'    kernel: ' + str(st[0]))
+                            self.emit(SIGNAL('infoclassif'), u'    C: ' + str(st[1]))
+                            self.emit(SIGNAL('infoclassif'), u'    gamma: ' + str(st[2]))
+                            kernel.append(str(st[0]))
+                            C.append(str(st[1]))
+                            gamma.append(str(st[2]).strip())
+                        else:
+                            kernel.append('0')
+                            C.append('0')
+                            gamma.append('0')
+                        if meths[(len(meths) - 1)] == 'MlKNN':
+                            n = name.get('args')[2:-2]
+                            self.emit(SIGNAL('infoclassif'), u'    k: ' + str(n))
+                            k.append(str(n))
+                        else:
+                            k.append('0')
+                        if csbase[(-1)] == 'Random Forests':
+                            st = name.get('args')[2:-2].split(',')
+                            print st[0], st[1]
+                            self.emit(SIGNAL('infoclassif'), u'    n_estimators: ' + str(st[0]))
+                            self.emit(SIGNAL('infoclassif'), u'    criterion_rf: ' + str(st[1]))
+                            n_estimators.append(str(st[0]))
+                            criterion_rf.append(str(st[1]).strip())
+                        else:
+                            n_estimators.append('0')
+                            criterion_rf.append('0')
+                        if csbase[(-1)] == 'Decision Tree':
+                            n = name.get('args')[2:-2]
+                            self.emit(SIGNAL('infoclassif'), u'    criterion_dt: ' + str(n))
+                            criterion_dt.append(str(n))
+                        else:
+                            criterion_dt.append('0')
+        else:
+            print 'terminado - paso no activado'
+            self.emit(SIGNAL('progress'), 100)
+            self.emit(SIGNAL('infoclassif'), u'\nTerminado\n')
+    self.emit(SIGNAL('log'))
 
     if clasactive == 1:
         print 'estoy para clasificar.....'
@@ -458,3 +504,4 @@ def execute_class(self, fname, dir):
             else:
                 self.emit(SIGNAL('infoclassif'), 'ERROR1')
 
+        self.emit(SIGNAL('infoclassif'), u'\nTerminado\n')

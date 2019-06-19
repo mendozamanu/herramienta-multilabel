@@ -12,12 +12,12 @@ from functools import partial
 # TODO https://stackoverflow.com/questions/3605680/creating-a-simple-xml-file-using-python#3605831 #usamos lxml
 
 # TODO
-#  BUGS: 1. pantalla completa - vista poco estética - escalado feo
+#  BUGS:
 #        2. cuando termina la ejecucion salen 2 errors/warnings sobre QObject::startTumer: Qtimer solo se puede usar en
 #        hilos lanzados por QThread.
 #        3. Object::disconnect: Unexpected null parameter en el pc de casa
 #        4. Al cancelar la ejecucion del programa porq se pulse volver a otra ventana o cerrar, que termine
-#        todo correctamente
+#        todo correctamente - creo q done
 
 root = etree.Element("experimento")
 file = ''
@@ -28,6 +28,7 @@ mk2 = False
 mk3 = False
 classif = []
 dir = './'
+wdir = ''
 xmlname = ''
 startxml = False
 datasets = []  # Contendra elems de la clase dset, estratif y metodo
@@ -38,7 +39,7 @@ fW = False
 cW = False
 xW = False
 
-p1 = False
+p1 = False  # PlotW created flag
 
 proxy = QIdentityProxyModel()
 
@@ -130,57 +131,71 @@ class GenericThread(QThread):
 class PlotWindow(QMainWindow):
     def __init__(self, parent=None):
         super(PlotWindow, self).__init__(parent)
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowMaximizeButtonHint)
+        self.setMaximumSize(700, 900)
 
+        print 'me inicializo ok'
         searchdir = str(dir) + '/' + 'tmp/'
-
         self.setWindowTitle(u"Herramienta para el estudio del problema "
                             u"de desequilibrio en problemas de clasificación multietiqueta")
 
-        self.scrollArea = QScrollArea(widgetResizable=True)
-        self.setCentralWidget(self.scrollArea)
-        content_widget = QWidget()
-        self.scrollArea.setWidget(content_widget)
-        lay = QVBoxLayout(content_widget)
-        self.saveall = QPushButton("Guardar todas")
+        if os.path.exists(searchdir):
 
-        i = 0
+            self.scrollArea = QScrollArea(widgetResizable=True)
+            self.setCentralWidget(self.scrollArea)
+            content_widget = QWidget()
+            self.scrollArea.setWidget(content_widget)
+            lay = QVBoxLayout(content_widget)
+            self.saveall = QPushButton("Guardar todas")
 
-        self.saveP = []
-        tosave = []
-        self.all = 0
-        # QMessageBox.about(self, 'Procesando...', u"Cargando gráficas...")
+            i = 0
 
-        for file in os.listdir(searchdir):
-            pixmap = QPixmap(os.path.join(searchdir, file))
-            if not pixmap.isNull():
-                label = QLabel(pixmap=pixmap.scaled(640,480, Qt.KeepAspectRatio))
+            self.saveP = []
+            tosave = []
+            self.all = 0
+            # QMessageBox.about(self, 'Procesando...', u"Cargando gráficas...")
 
-                lay.addWidget(label)
+            for file in os.listdir(searchdir):
+                pixmap = QPixmap(os.path.join(searchdir, file))
+                if not pixmap.isNull():
+                    label = QLabel(pixmap=pixmap.scaled(640,480, Qt.KeepAspectRatio))
 
-                tosave.append(file)
-                tmp1 = QPushButton("Guardar")
-                self.saveP.append(tmp1)
-                lay.addWidget(self.saveP[i])
-                i+=1
+                    lay.addWidget(label)
 
-        if len(self.saveP) == 0:
-            # emitir señal de cerrar ventana
-            self.emit(SIGNAL('close'), self.closeEvent)
+                    tosave.append(file)
+                    tmp1 = QPushButton("Guardar")
+                    self.saveP.append(tmp1)
+                    lay.addWidget(self.saveP[i])
+                    i+=1
 
-        lay.addWidget(self.saveall)
-        self.saveall.clicked.connect(partial(self.save_complete, tosave))
+            if len(self.saveP) == 0:
+                # emitir señal de cerrar ventana
+                self.emit(SIGNAL('close'), self.close)
 
-        self.idx = 0
+            lay.addWidget(self.saveall)
+            self.saveall.clicked.connect(partial(self.save_complete, tosave))
 
-        for p in range(0, len(self.saveP)):
-            self.saveP[p].clicked.connect(partial(self.save, tosave[p]))
+            self.idx = 0
+
+            for p in range(0, len(self.saveP)):
+                self.saveP[p].clicked.connect(partial(self.save, tosave[p]))
+
+        else:
+            print 'a cerrarse'
+            self.emit(SIGNAL('close'), self.close)
+            #self.closeEvent(QCloseEvent)
 
     def closeEvent(self, event):
+        global p1
         # Borrar carpeta temporal de gráficas
         if os.path.isdir(dir+'/tmp/'):
             shutil.rmtree(dir+'/tmp/')
 
-        xmlUI.exec_folds()
+        event.accept()
+        p1 = False
+
+        if xmlUI:
+            xmlUI.exec_folds()
 
     def save_complete(self, fnams):
         route = str(QFileDialog.getExistingDirectory(self, 'Select Directory'))
@@ -227,7 +242,6 @@ class XmlW(QMainWindow):
 
         self.load = QLineEdit() # Para cargar el xml a ejecutar
 
-        #self.load.setText(str(xmlname))
         self.load.setReadOnly(True)
         self.btn1 = QPushButton("Cargar fichero XML")
         self.workingDir = QLineEdit()  # Para cargar el xml a ejecutar
@@ -260,9 +274,8 @@ class XmlW(QMainWindow):
 
     def __init__(self, parent=None):
         super(XmlW, self).__init__(parent)
-        # layout.addWidget(self.btn1)
-        self.setMinimumSize(600, 300)  # Tamanio minimo de ventana
-        self.resize(850, 400)  # Tamanio por defecto de ventana
+
+        self.setFixedSize(850, 400)  # Tamanio por defecto de ventana
 
         self.setWindowTitle(u"Herramienta para el estudio del problema "
                             u"de desequilibrio en problemas de clasificación multietiqueta")
@@ -276,8 +289,9 @@ class XmlW(QMainWindow):
         self.info.clear()
 
     def getWorkingDir(self):
-        global dir
+        global dir, wdir
         dir = ctrl.getsaveDir(self)
+        wdir = dir
         self.workingDir.setText(str(dir))
 
     def adds(self, info):  # Dataset operations
@@ -299,8 +313,6 @@ class XmlW(QMainWindow):
 
         if str(info) == 'Head':
             self.info.append(u"1. Análisis del dataset\nInformación cargada: ")
-        #if str(info) == 'INFO1':
-            #self.info.append(u"Ejecutando operaciones solicitadas...")
         if str(info) == 'ERROR1':
             QMessageBox.about(self, "Error", "Error en el formato de la cabecera del fichero de dataset")
         if str(info) == 'ERROR2':
@@ -366,12 +378,27 @@ class XmlW(QMainWindow):
     def upd(self, progress):
         self.progress.setValue(progress)
 
+    def log(self):
+        logger = wdir + '/log.out'
+        dump = self.info.toPlainText()
+        dump = dump.toUtf8()
+        fp = open(logger, 'w')
+        fp.write(dump)
+        fp.close()
+
     def nxt(self):
         global p1
         if not p1:
             self.plots = PlotWindow(self)
             self.plots.show()
         p1 = True
+        if not xmlUI:
+            logger = wdir + '/log.out'
+            fp=open(logger, 'a')
+            fp.write("\n>Se ha cancelado la ejecución")
+            fp.close()
+        else:
+            self.log()
 
         # self.exec_folds()
 
@@ -380,33 +407,37 @@ class XmlW(QMainWindow):
             self.plots.close()
 
     def lst(self):
-        self.exec_class()
+        if not xmlUI:
+            logger = wdir + '/log.out'
+            fp=open(logger, 'a')
+            fp.write("\n>Se ha cancelado la ejecución")
+            fp.close()
+        else:
+            self.log()
+            self.exec_class()
 
     def execute(self):
         self.info.clear()
         self.exec_ds()
-        #self.exec_folds()
-        #self.exec_class()
 
     def exec_ds(self):
 
         self.threadPool.append(GenericThread(ctrl.execute_dset, self, xmlname, dir))
 
-        # self.threadPool.append(GenericThread(ctrl.plot1, self, op2, fileds, dir))
-
         self.disconnect(self, SIGNAL("textoinf"), self.adds)
         self.connect(self, SIGNAL("textoinf"), self.adds)
+
         self.disconnect(self, SIGNAL("finished"), self.nxt)
         self.connect(self, SIGNAL("finished"), self.nxt)
-        #self.disconnect(self, SIGNAL("prog1"), self.prog1)
-        #self.connect(self, SIGNAL("prog1"), self.prog1)
+
+        self.disconnect(self, SIGNAL("prog1"), self.upd)
+        self.connect(self, SIGNAL("prog1"), self.upd)
 
         self.threadPool[len(self.threadPool) - 1].start()
 
-        # self.threadPool.append(GenericThread(ctrl.plot2, self, op3, fileds, dir))
-
     def exec_folds(self):
 
+        self.progress.setValue(0)
         self.threadPool.append(GenericThread(ctrl.execute_folds, self, xmlname, dir))
         self.disconnect(self, SIGNAL("add(QString)"), self.add)
         self.connect(self, SIGNAL("add(QString)"), self.add)
@@ -421,6 +452,7 @@ class XmlW(QMainWindow):
 
     def exec_class(self):
 
+        self.progress.setValue(0)
         self.threadPool.append(GenericThread(ctrl.execute_class, self, xmlname, dir))
 
         self.disconnect(self, SIGNAL("infoclassif"), self.addc)
@@ -428,6 +460,9 @@ class XmlW(QMainWindow):
 
         self.disconnect(self, SIGNAL("progress"), self.upd)
         self.connect(self, SIGNAL("progress"), self.upd)
+
+        self.disconnect(self, SIGNAL("log"), self.log)
+        self.connect(self, SIGNAL("log"), self.log)
 
         self.threadPool[len(self.threadPool) - 1].start()
 
@@ -468,8 +503,6 @@ class ClassifW(QMainWindow):
         self.checkmt2 = QCheckBox("Random")
         self.checkmt3 = QCheckBox("Labelset")
 
-        # self.progress = QProgressBar(self)
-
         self.grid = QGridLayout()
         self.grid.setSpacing(2)
         self.grid.addWidget(self.label, 0, 0)
@@ -490,10 +523,7 @@ class ClassifW(QMainWindow):
         self.grid.addWidget(self.base, 4, 0, Qt.AlignCenter)
         self.grid.addWidget(self.lst2, 8, 0)
         self.grid.addWidget(self.txt, 9, 0)
-        # self.grid.addWidget(self.progress, 9, 0)
 
-        #self.txt.setReadOnly(True)
-        #self.txt.setText(u"Número de folds realizados anteriormente: " + str(nfolds))
         if nfolds <= 1:
             self.txt.setText(u"Aviso. No se podrá realizar la clasificación si no hay más de 2 particionados realizados")
             self.txt.show()
@@ -509,9 +539,8 @@ class ClassifW(QMainWindow):
 
     def __init__(self, parent=None):
         super(ClassifW, self).__init__(parent)
-        # layout.addWidget(self.btn1)
-        self.setMinimumSize(600, 300)  # Tamanio minimo de ventana
-        self.resize(850, 400)  # Tamanio por defecto de ventana
+
+        self.setFixedSize(850, 400)  # Tamanio por defecto de ventana
 
         self.setWindowTitle(u"Herramienta para el estudio del problema "
                             u"de desequilibrio en problemas de clasificación multietiqueta")
@@ -683,7 +712,6 @@ class DatasetW(QMainWindow):
         self.threadPool = []
         self.le = QLineEdit(file)
         self.le.setReadOnly(True)
-        # layout.addWidget(self.le)
         self.btn1 = QPushButton("Cargar dataset")
 
         self.label = QLabel(u"Listado de dataset cargados: ")
@@ -700,7 +728,6 @@ class DatasetW(QMainWindow):
         self.c3 = QCheckBox(u"Gráfica correlación entre etiquetas")
         self.c4 = QCheckBox(u"Gráfica de frecuencia de las etiquetas")
         self.contents = QTextEdit()  # .setReadOnly(True)
-        # layout.addWidget(self.contents)
 
         self.grid1 = QGridLayout()
         self.grid1.setSpacing(5)
@@ -735,9 +762,8 @@ class DatasetW(QMainWindow):
 
     def __init__(self, parent=None):
         super(DatasetW, self).__init__(parent)
-        # layout.addWidget(self.btn1)
-        self.setMinimumSize(600, 300)  # Tamanio minimo de ventana
-        self.resize(850, 400)  # Tamanio por defecto de ventana
+
+        self.setFixedSize(850, 400)  # Tamanio por defecto de ventana
 
         self.setWindowTitle(u"Herramienta para el estudio del problema "
                             u"de desequilibrio en problemas de clasificación multietiqueta")
@@ -905,7 +931,6 @@ class FoldsW(QMainWindow):
         self.nlabels.setText(str(nfolds))
 
         self.flabel3 = QLabel()
-        # self.progress = QProgressBar(self)
 
         self.flabel2 = QLabel(u"Estratificación: ")
         self.checkmt1 = QCheckBox("Iterative")
@@ -916,7 +941,7 @@ class FoldsW(QMainWindow):
         self.grid2.setSpacing(5)
         self.grid2.addWidget(self.label, 0, 0)
         self.grid2.addWidget(self.lst, 1, 0)
-        # self.grid1.addWidget(self.contents, 1, 0)
+
 
         self.grid2.addWidget(self.flabel1, 2, 0)
         self.grid2.addWidget(self.nlabels, 3, 0, Qt.AlignLeft)
@@ -934,7 +959,7 @@ class FoldsW(QMainWindow):
         self.grid2.addWidget(self.flabel, 6, 0)
         self.grid2.addWidget(self.flabel3, 7, 0, Qt.AlignLeft)
         self.flabel3.show()
-        # self.grid2.addWidget(self.progress, 10, 0)  # , Qt.AlignLeft)
+
         self.centralWidget().setLayout(self.grid2)
 
         framegm = self.frameGeometry()
@@ -948,9 +973,8 @@ class FoldsW(QMainWindow):
 
     def __init__(self, parent=None):
         super(FoldsW, self).__init__(parent)
-        # layout.addWidget(self.btn1)
-        self.setMinimumSize(600, 300)  # Tamanio minimo de ventana
-        self.resize(850, 400)  # Tamanio por defecto de ventana
+
+        self.setFixedSize(850, 400)  # Tamanio por defecto de ventana
 
         self.setWindowTitle(u"Herramienta para el estudio del problema "
                             u"de desequilibrio en problemas de clasificación multietiqueta")
@@ -1040,6 +1064,11 @@ class FoldsW(QMainWindow):
 
         global file, nfolds
         global xmlname, startxml
+        global root
+
+        # Si llegamos a esta ventana, no se ha guardado el experim asi q podemos resetearlo para evitar
+        # elems no deseados
+        root = etree.Element("experimento")
 
         if self.nlabels.text() == '0':
             self.flabel3.setText("Aviso. No se pueden ejecutar particiones con 0 folds...")
@@ -1132,9 +1161,11 @@ class MainApplication(QMainWindow):
 
     def __init__(self, parent=None):
         super(MainApplication, self).__init__(parent)
-        # layout.addWidget(self.btn1)
-        self.setMinimumSize(600, 300)  # Tamanio minimo de ventana
-        self.resize(850, 400)  # Tamanio por defecto de ventana
+        self.setWindowFlags(self.windowFlags() | Qt.CustomizeWindowHint)
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowSystemMenuHint & Qt.WindowCloseButtonHint
+                            & Qt.WindowMinimizeButtonHint)
+
+        self.setFixedSize(850, 400)  # Tamanio por defecto de ventana
 
         self.setWindowTitle(u"Herramienta para el estudio del problema "
                             u"de desequilibrio en problemas de clasificación multietiqueta")
@@ -1233,7 +1264,6 @@ class MainApplication(QMainWindow):
             xmlUI = XmlW(self)
             xW = True
 
-        #TODO: revisar esto y descomentarlo si es necesario tenerlo
         if xmlname == '':
             # Guardar las ops antes d camb d ventana
             self.ClassifUI.getXml()
@@ -1262,7 +1292,7 @@ class MainApplication(QMainWindow):
     def restart(self):
         global file, text, nfolds, classif, dir, xmlname, datasets, xmlUI, dsW, fW, cW, xW
 
-        if os.path.isdir(dir+'/tmp/'): #TODO: revisar si lo dejamos asi y ctrl errores en plotwindow
+        if os.path.isdir(dir+'/tmp/'):  # Control de errores aplicado para que esto sea posible
             shutil.rmtree(dir+'/tmp/')
 
         if dsW:
@@ -1278,7 +1308,7 @@ class MainApplication(QMainWindow):
                 xmlUI.threadPool[i].stop()
 
         if cW:
-            self.classifUI.close()
+            self.ClassifUI.close()
 
         self.btn1.setEnabled(True)
         self.btn2.setEnabled(False)

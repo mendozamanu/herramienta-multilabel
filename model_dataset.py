@@ -242,7 +242,7 @@ def cardinality(self, df):
 
         nwdfname = str(df)[:str(df).rfind('.')] + "_measures.report"
         print '>>>>>>'+nwdfname
-        self.emit(SIGNAL('textoinf'), "\nMedidas del dataset: ")
+        self.emit(SIGNAL('textoinf'), "\nMedidas del dataset "+str(dat)+':')
         fp = open(nwdfname, 'w')
         fp.write("Instances: " + str(instances) + '\n')
         self.emit(SIGNAL('textoinf'), ">Instances: " + str(instances))
@@ -547,7 +547,9 @@ def coov(self, name, dir, plt1, plt2):
                 plt.annotate(str(labelscorrel[j]), xy=(j, i + (np.max(labelscorrel) * 0.01)), horizontalalignment='center')
 
             # plt.show()
-            plt.savefig(save + dat + '_corrlabls.png')
+            print save
+            if os.path.exists(save):
+                plt.savefig(save + dat + '_corrlabls.png')
             plt.close()
 
         if plt2:
@@ -563,5 +565,6 @@ def coov(self, name, dir, plt1, plt2):
             plt.annotate(str("{0:.3f}".format(cor[-1])), xy=((n * n) - n - 2, cor[-1] + 0.02))
 
             # plt.show()
-            plt.savefig(save + dat + '_corrordered.png')
+            if os.path.exists(save):
+                plt.savefig(save + dat + '_corrordered.png')
             plt.close()

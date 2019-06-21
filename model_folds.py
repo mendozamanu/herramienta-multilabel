@@ -316,56 +316,96 @@ def gen_folds(self, nfolds, fname, dir, mk1, mk2, mk3):
         if nfolds > 0:
 
             if mk1:
-                #tmp = self.checkmt1.text()
-                # self.flabel3.setText(u"Generando los folds, método: "+self.checkmt1.text())
-                if not os.path.exists(str(dir) + '/' + str(suffix) + '/' + str(suffix) + str(nfolds) + '_iterative'):
-                    os.makedirs(str(dir) + '/' + str(suffix) + '/' + str(suffix) + str(nfolds) + '_iterative')
+                route = str(dir) + '/' + str(suffix) + '/' + str(suffix) + str(nfolds) + '_iterative'
+
+                if not os.path.exists(route):
+                    os.makedirs(route)
                     kf1 = IterativeStratification(n_splits=int(nfolds), order=1)
-                    self.emit(SIGNAL('add(QString)'), u">Generando particiones con estratificado iterativo...")
-                    exec_fold(self, str(dir) + '/' + str(suffix) + '/' + str(suffix) + str(nfolds) + '_iterative/' + str(suffix), kf1, X, y, int(nfolds), sparse, number)
+                    self.emit(SIGNAL('add(QString)'), ">Generando particiones con estratificado iterativo...")
+
+                    exec_fold(self, route + '/' +
+                              str(suffix), kf1, X, y, int(nfolds), sparse, number)
                     self.emit(SIGNAL('add(QString)'), u"Hecho!")
+
                 else:
-                    self.emit(SIGNAL('add(QString)'), u">Las particiones iterativas solicitadas ya existen")
-                    self.emit(SIGNAL('update(int)'), 100)
+                    # Vemos si nº fichs dentro de la carpeta adecuada es al menos 2* nfolds +1 (measures)
+                    cnt = len([name for name in os.listdir(route) if os.path.isfile(os.path.join(route, name))])
+
+                    if cnt < 2*nfolds+1:
+                        kf1 = IterativeStratification(n_splits=int(nfolds), order=1)
+
+                        self.emit(SIGNAL('add(QString)'), ">Se han detectado particiones iterativas incompletas")
+                        self.emit(SIGNAL('add(QString)'), ">Generando particiones con estratificado iterativo...")
+
+                        exec_fold(self, route + '/' +
+                                  str(suffix), kf1, X, y, int(nfolds), sparse, number)
+                        self.emit(SIGNAL('add(QString)'), u"Hecho!")
+
+                    else:
+                        self.emit(SIGNAL('add(QString)'), u">Las particiones iterativas solicitadas ya existen")
+                        self.emit(SIGNAL('update(int)'), 100)
 
             if mk2:
-                #tmp = self.checkmt2.text()
-                # self.flabel3.setText(u"Generando los folds, método: " + self.checkmt2.text())
-                if not os.path.exists(str(dir) + '/' + str(suffix) + '/' + str(suffix) + str(nfolds) + '_random'):
-                    os.makedirs(str(dir) + '/' + str(suffix) + '/' + str(suffix) + str(nfolds) + '_random')
+                route2 = str(dir) + '/' + str(suffix) + '/' + str(suffix) + str(nfolds) + '_random'
+                if not os.path.exists(route2):
+                    os.makedirs(route2)
                     kf2 = KFold(n_splits=int(nfolds), shuffle=True)
                     self.emit(SIGNAL('add(QString)'), ">Generando particiones con estratificado aleatorio...")
-                    exec_fold(self, str(dir) + '/' + str(suffix) + '/' + str(suffix) + str(nfolds) + '_random/' + str(suffix), kf2, X, y, int(nfolds), sparse, number)
+
+                    exec_fold(self, route2 + '/' +
+                              str(suffix), kf2, X, y, int(nfolds), sparse, number)
                     self.emit(SIGNAL('add(QString)'), u"Hecho!")
                 else:
-                    self.emit(SIGNAL('add(QString)'), u">Las particiones aleatorias solicitadas ya existen")
-                    self.emit(SIGNAL('update(int)'), 100)
+                    cnt = len([name for name in os.listdir(route2) if os.path.isfile(os.path.join(route2, name))])
+
+                    if cnt < 2 * nfolds + 1:
+                        kf2 = KFold(n_splits=int(nfolds), shuffle=True)
+
+                        self.emit(SIGNAL('add(QString)'), ">Se han detectado particiones aleatorias incompletas")
+                        self.emit(SIGNAL('add(QString)'), ">Generando particiones con estratificado aleatorio...")
+
+                        exec_fold(self, route2 + '/' +
+                                  str(suffix), kf2, X, y, int(nfolds), sparse, number)
+                        self.emit(SIGNAL('add(QString)'), u"Hecho!")
+                    else:
+                        self.emit(SIGNAL('add(QString)'), u">Las particiones aleatorias solicitadas ya existen")
+                        self.emit(SIGNAL('update(int)'), 100)
 
             if mk3:
-                #tmp = self.checkmt3.text()
-                # self.flabel3.setText(u"Generando los folds, método: " + self.checkmt3.text())
-                if not os.path.exists(str(dir) + '/' + str(suffix) + '/' + str(suffix) + str(nfolds) + '_labelset'):
-                    os.makedirs(str(dir) + '/' + str(suffix) + '/' + str(suffix) + str(nfolds) + '_labelset')
+                route3 = str(dir) + '/' + str(suffix) + '/' + str(suffix) + str(nfolds) + '_labelset'
+                if not os.path.exists(route3):
+                    os.makedirs(route3)
                     kf3 = stratified_folds(int(nfolds), y)
-                    # Para labelset hay q modificar un poco la func
-                    self.emit(SIGNAL('add(QString)'), u">Generando particiones con estratificado labelset...")
-                    exec_fold(self, str(dir) + '/' + str(suffix) + '/' + str(suffix) + str(nfolds) + '_labelset/' + str(suffix), kf3, X, y, int(nfolds), sparse, number)
+
+                    self.emit(SIGNAL('add(QString)'), ">Generando particiones con estratificado labelset...")
+
+                    exec_fold(self, route3 + '/' +
+                              str(suffix), kf3, X, y, int(nfolds), sparse, number)
                     self.emit(SIGNAL('add(QString)'), u"Hecho!")
                 else:
-                    self.emit(SIGNAL('add(QString)'), u">Las particiones labelset solicitadas ya existen")
-                    self.emit(SIGNAL('update(int)'), 100)
+                    cnt = len([name for name in os.listdir(route3) if os.path.isfile(os.path.join(route3, name))])
+
+                    if cnt < 2 * nfolds + 1:
+                        kf3 = stratified_folds(int(nfolds), y)
+
+                        self.emit(SIGNAL('add(QString)'), ">Se han detectado particiones de labelset incompletas")
+                        self.emit(SIGNAL('add(QString)'), ">Generando particiones con estratificado labelset...")
+
+                        exec_fold(self, route3 + '/' +
+                                  str(suffix), kf3, X, y, int(nfolds), sparse, number)
+                        self.emit(SIGNAL('add(QString)'), u"Hecho!")
+                    else:
+                        self.emit(SIGNAL('add(QString)'), u">Las particiones labelset solicitadas ya existen")
+                        self.emit(SIGNAL('update(int)'), 100)
 
             if (mk1 is False) and (mk2 is False) and (mk3 is False):
                 self.emit(SIGNAL('add(QString)'), 'Info1')
-                # self.flabel3.setText(u"No se ha seleccionado ningún método de estratificación")
-                # self.flabel3.show()
+
             else:
                 self.emit(SIGNAL('add(QString)'), 'Info2')
-                # self.flabel3.setText(u"Particiones generadas correctamente, compruebe los .train y .test generados")
+
         else:
             self.emit(SIGNAL('add(QString)'), 'Info3')
-            # self.flabel3.setText(u"No se pueden generar 0 folds, introduzca un valor válido")
-            # self.flabel3.show()
 
     self.emit(SIGNAL('add(QString)'), str(nfolds))
     if mk1:

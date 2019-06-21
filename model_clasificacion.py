@@ -294,7 +294,8 @@ def getargs(self, metodo):
 
     if metodo == 'MlKNN':
         # Requiere parametro k
-        k, _ = QInputDialog.getInt(self, u"Parámetro k - MlKNN", u"Introduzca el valor de k para MlKNN: ", 5)
+        k, _ = QInputDialog.getInt(self, u"Parámetro k - MlKNN", u"Introduzca el valor de k para MlKNN: ", 5,
+                                   min=1, max=1000)
         result = str(k)
 
     else:
@@ -304,16 +305,17 @@ def getargs(self, metodo):
             # Req n_neighbors
             n_neighbors, _ = QInputDialog.getInt(self, u"Parámetro n_neighbors - kNN", u"Introduzca el valor "
                                                                                         u"de n_neighbors para "
-                                                                                        u"kNN: ", 5)
+                                                                                        u"kNN: ", 5, min=1, max=1000)
             result = str(n_neighbors)
 
         if metodo == 'Random Forests':
             # Req n_estimators, criterion
             n_estimators, _ = QInputDialog.getInt(self, u"Parámetro n_estimators - Random Forests",
-                                               u"Introduzca el valor de n_estimators para Random Forests: ", 10)
+                                                  u"Introduzca el valor de n_estimators para Random Forests: ", 10,
+                                                  min=1, max=1000)
             criterion_rf, _ = QInputDialog.getItem(self, u"Parámetro criterion - Random Forests",
-                                                u"Seleccione el valor de criterion para Random Forests: ",
-                                                crits, 0, False)
+                                                   u"Seleccione el valor de criterion para Random Forests: ",
+                                                   crits, 0, False)
             result = (str(n_estimators) + ', ' + str(criterion_rf))
 
         if metodo == 'SVM':
@@ -321,14 +323,19 @@ def getargs(self, metodo):
             kernel, _ = QInputDialog.getItem(self, u"Parámetro kernel - SVM",
                                              u"Seleccione el valor de kernel para SVM: ",
                                              kern, 0, False)
-            C, _ = QInputDialog.getDouble(self, u"Parámetro C - SVM", u"Seleccione el valor de C para SVM", 1.0)
+            C, _ = QInputDialog.getDouble(self, u"Parámetro C - SVM", u"Seleccione el valor de C para SVM", 1.0,
+                                          decimals=5, min=0.0, max=10.0)
 
             if kernel == 'poly' or kernel == 'sigmoid' or kernel == 'rbf':
                 # Necesitamos gamma
                 gamma, _ = QInputDialog.getDouble(self, u'Parámetro gamma - SVM',
-                                                  u"Introduzca el valor de gamma para SVM: ", 0.0, decimals=5)
+                                                  u"Introduzca el valor de gamma para SVM: ", 0.0, decimals=5,
+                                                  min=0.0, max=10.0)
                 if gamma == 0.0:
                     gamma = 'scale'
+            else:
+                gamma = 'scale'
+
             result = str(kernel) + ', ' + str(C) + ', ' + str(gamma)
 
         if metodo == 'Decision Tree':

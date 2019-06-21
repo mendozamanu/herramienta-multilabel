@@ -2,6 +2,8 @@
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 import sys, os, numpy as np, time
+
+from sklearn.exceptions import UndefinedMetricWarning
 from skmultilearn.problem_transform import BinaryRelevance
 from skmultilearn.problem_transform import LabelPowerset
 from skmultilearn.problem_transform import ClassifierChain
@@ -19,6 +21,7 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, 
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 from datetime import datetime
+import warnings
 
 gk = 5
 gn_neighbors = 5
@@ -34,9 +37,45 @@ def load(self):
     dlg = QFileDialog()
     dlg.setFileMode(QFileDialog.AnyFile)
     dlg.setFilter('XML files (*.xml)')
+    ok = 0
     if dlg.exec_():
         filenames = dlg.selectedFiles()
-        return filenames[0]
+        tree = etree.parse(str(filenames[0]))
+        print tree.getroot().tag
+        if tree.getroot().tag == 'experimento':
+            for element in tree.iter():
+                if element.tag == 'dataset':
+                    ok = 1
+            if not ok == 1:
+                QMessageBox.about(self, "Aviso", u"El archivo XML cargado no es válido, "
+                                                  "revise el contenido o vuelva a generarlo")
+                return ''
+        else:
+            QMessageBox.about(self, "Aviso", u"El archivo XML cargado no es válido, "
+                                             "revise el contenido o vuelva a generarlo")
+            return ''
+        if tree.findall('.//dataset'):
+            for name in tree.findall('.//dataset'):
+                if name.get('filename') and name.get('op1') and name.get('op2') and name.get('op3') and name.get('op4'):
+                    ok = 1
+                else:
+                    QMessageBox.about(self, "Aviso", u"El archivo XML cargado no es válido, "
+                                                     "revise el contenido o vuelva a generarlo")
+                    return ''
+        if tree.findall('.//estratificado'):
+            ok = 1
+        if tree.findall('.//metodo'):
+            for nam in tree.findall('.//metodo'):
+                if nam.get('cbase') and nam.get('method') and nam.get('args'):
+                    ok = 1
+                else:
+                    QMessageBox.about(self, "Aviso", u"El archivo XML cargado no es válido, "
+                                                      "revise el contenido o vuelva a generarlo")
+                    return ''
+        if ok == 1:
+            return filenames[0]
+        else:
+            return ''
     return ''
 
 
@@ -105,7 +144,7 @@ def execute_dset(self, fname, dir):
         for i in range(0, len(fileds)):
             cnt = 0
             if not op1[i] == 'False':
-                cnt+=1
+                cnt += 1
             if not op2[i] == 'False':
                 cnt += 1
             if not op3[i] == 'False':
@@ -117,121 +156,125 @@ def execute_dset(self, fname, dir):
             tmp = os.path.basename(str(fileds[i]))
             dat = os.path.splitext(tmp)[0]
 
-            if not os.path.exists(save):
-                os.makedirs(save)
-
-            parts.append(Spacer(1, 0.2 * inch))
-            p = Paragraph("Dataset: " + dat, styles["Title"])
-            parts.append(Spacer(1, 0.2 * inch))
-            parts.append(p)
-
-            self.emit(SIGNAL('textoinf'), 'INFO1')
-            prog = 100 / cnt
-            if not op1[i] == 'False':
-
-                df = md.convert(self, fileds[i], dir)
-                self.emit(SIGNAL('prog1'), prog/2)
-
-                report, insts = md.cardinality(self, df)
-                self.emit(SIGNAL('prog1'), prog)
-
+            if not cnt == 0:
                 parts.append(Spacer(1, 0.2 * inch))
-                p = Paragraph(u"Medidas: ", styles["Heading2"])
+                p = Paragraph("Dataset: " + dat, styles["Title"])
+                parts.append(Spacer(1, 0.2 * inch))
                 parts.append(p)
 
-                if os.path.isfile(report):
-                    fo = open(report, 'r')
+                self.emit(SIGNAL('textoinf'), 'INFO1')
+                prog = 100 / cnt
+                if not op1[i] == 'False':
 
-                    headers = []
-                    data = []
+                    df = md.convert(self, fileds[i], dir)
+                    self.emit(SIGNAL('prog1'), prog/2)
 
-                    for o in range(0, 6):
-                        inline = fo.readline()
-                        part = inline.split(': ')
+                    report, insts = md.cardinality(self, df)
+                    self.emit(SIGNAL('prog1'), prog)
 
-                        if part[0] == 'Instances':
-                            headers.append(u"Nº de instancias")
-                            data.append(str(part[1]).strip('\n'))
-
-                        if part[0] == 'Features':
-                            headers.append(u"Nº de características")
-                            data.append(str(part[1]).strip('\n'))
-
-                        if part[0] == 'Labels':
-                            headers.append(u"Nº de etiquetas")
-                            data.append(str(part[1]).strip('\n'))
-
-                        if part[0] == 'Cardinality':
-                            headers.append(u"Cardinalidad")
-                            data.append(str(part[1]).strip('\n'))
-
-                        if part[0] == 'Density':
-                            headers.append(u"Densidad de etiquetas")
-                            data.append(str(part[1]).strip('\n'))
-
-                        if part[0] == 'Distinct':
-                            headers.append(u"Nº de combinaciones de etiquetas distintas")
-                            data.append(str(part[1]).strip('\n'))
-
-                    parts.append(Spacer(1, 0.4 * inch))
-                    tmp = []
-                    for l in range(0, 6):
-                        tmp.append(headers[l:l+1] + data[l:l+1])
-
-                    print tmp
-
-                    t = Table(tmp, rowHeights=(10*mm, 10*mm, 10*mm, 10*mm, 10*mm, 10*mm), colWidths=(70*mm, 60*mm),
-                              style=[('GRID',(0,0),(-1,-1),0.5,colors.black), ('BACKGROUND', (0, 0), (0, -1), colors.silver),
-                                    ('ALIGN',(0,0),(-1,-1),'CENTER'), ('VALIGN',(0,0),(-1,-1),'MIDDLE'),
-                                    ])
-                    parts.append(t)
                     parts.append(Spacer(1, 0.2 * inch))
-
-                    parts.append(PageBreak())
-
-            if not op2[i] == 'False':
-                prog += prog
-                md.coov(self, fileds[i], dir, True, False)
-                self.emit(SIGNAL('prog1'), prog)
-
-                if os.path.isfile(save + dat + '_corrlabls.png'):
-                    parts.append(Spacer(1, 0.2 * inch))
-                    p = Paragraph(u"Gráfica de correlación entre etiquetas", styles["Heading2"])
+                    p = Paragraph(u"Medidas: ", styles["Heading2"])
                     parts.append(p)
 
-                    parts.append(Image(save + dat + '_corrlabls.png'))
-                    parts.append(PageBreak())
+                    if os.path.isfile(report):
+                        fo = open(report, 'r')
 
-            if not op3[i] == 'False':
-                prog += prog
-                md.coov(self, fileds[i], dir, False, True)
-                self.emit(SIGNAL('prog1'), prog)
+                        headers = []
+                        data = []
 
-                if os.path.isfile(save + dat + '_corrordered.png'):
-                    parts.append(Spacer(1, 0.2 * inch))
-                    p = Paragraph(u"Gráfica de distribucion de la correlación", styles["Heading2"])
-                    parts.append(p)
+                        for o in range(0, 6):
+                            inline = fo.readline()
+                            part = inline.split(': ')
 
-                    parts.append(Image(save + dat + '_corrordered.png'))
-                    parts.append(PageBreak())
-            if not op4[i] == 'False':
-                prog += prog
-                md.labfrecplot(insts, fileds[i], dir)
-                self.emit(SIGNAL('prog1'), prog)
+                            if part[0] == 'Instances':
+                                headers.append(u"Nº de instancias")
+                                data.append(str(part[1]).strip('\n'))
 
-                if os.path.isfile(save + dat + '_freclbs.png'):
+                            if part[0] == 'Features':
+                                headers.append(u"Nº de características")
+                                data.append(str(part[1]).strip('\n'))
 
-                    parts.append(Spacer(1, 0.2 * inch))
-                    p = Paragraph(u"Gráfica de frecuencia de las etiquetas", styles["Heading2"])
-                    parts.append(p)
+                            if part[0] == 'Labels':
+                                headers.append(u"Nº de etiquetas")
+                                data.append(str(part[1]).strip('\n'))
 
-                    parts.append(Image(save + dat + '_freclbs.png', width=640, height=480, kind='proportional'))
-                    parts.append(PageBreak())
+                            if part[0] == 'Cardinality':
+                                headers.append(u"Cardinalidad")
+                                data.append(str(part[1]).strip('\n'))
 
-        if os.path.exists(save):
-            doc.build(parts)
-        self.emit(SIGNAL('textoinf'), '\nInforme PDF generado, puede consultarlo en: ' + dir + '/' +
-                  str(tstamp)+"_plot-report.pdf\n")
+                            if part[0] == 'Density':
+                                headers.append(u"Densidad de etiquetas")
+                                data.append(str(part[1]).strip('\n'))
+
+                            if part[0] == 'Distinct':
+                                headers.append(u"Nº de combinaciones de etiquetas distintas")
+                                data.append(str(part[1]).strip('\n'))
+
+                        parts.append(Spacer(1, 0.4 * inch))
+                        tmp = []
+                        for l in range(0, 6):
+                            tmp.append(headers[l:l+1] + data[l:l+1])
+
+                        print tmp
+
+                        t = Table(tmp, rowHeights=(10*mm, 10*mm, 10*mm, 10*mm, 10*mm, 10*mm), colWidths=(70*mm, 60*mm),
+                                  style=[('GRID',(0,0),(-1,-1),0.5,colors.black), ('BACKGROUND', (0, 0), (0, -1), colors.silver),
+                                        ('ALIGN',(0,0),(-1,-1),'CENTER'), ('VALIGN',(0,0),(-1,-1),'MIDDLE'),
+                                        ])
+                        parts.append(t)
+                        parts.append(Spacer(1, 0.2 * inch))
+
+                        parts.append(PageBreak())
+
+                if not op2[i] == 'False':
+                    if not os.path.exists(save):
+                        os.makedirs(save)
+                    prog += prog
+                    md.coov(self, fileds[i], dir, True, False)
+                    self.emit(SIGNAL('prog1'), prog)
+
+                    if os.path.isfile(save + dat + '_corrlabls.png'):
+                        parts.append(Spacer(1, 0.2 * inch))
+                        p = Paragraph(u"Gráfica de correlación entre etiquetas", styles["Heading2"])
+                        parts.append(p)
+
+                        parts.append(Image(save + dat + '_corrlabls.png'))
+                        parts.append(PageBreak())
+
+                if not op3[i] == 'False':
+                    if not os.path.exists(save):
+                        os.makedirs(save)
+                    prog += prog
+                    md.coov(self, fileds[i], dir, False, True)
+                    self.emit(SIGNAL('prog1'), prog)
+
+                    if os.path.isfile(save + dat + '_corrordered.png'):
+                        parts.append(Spacer(1, 0.2 * inch))
+                        p = Paragraph(u"Gráfica de distribucion de la correlación", styles["Heading2"])
+                        parts.append(p)
+
+                        parts.append(Image(save + dat + '_corrordered.png'))
+                        parts.append(PageBreak())
+                if not op4[i] == 'False':
+                    if not os.path.exists(save):
+                        os.makedirs(save)
+                    prog += prog
+                    md.labfrecplot(insts, fileds[i], dir)
+                    self.emit(SIGNAL('prog1'), prog)
+
+                    if os.path.isfile(save + dat + '_freclbs.png'):
+
+                        parts.append(Spacer(1, 0.2 * inch))
+                        p = Paragraph(u"Gráfica de frecuencia de las etiquetas", styles["Heading2"])
+                        parts.append(p)
+
+                        parts.append(Image(save + dat + '_freclbs.png', width=640, height=480, kind='proportional'))
+                        parts.append(PageBreak())
+
+                if os.path.exists(save) or op1[i] == 'True':
+                    doc.build(parts)
+                self.emit(SIGNAL('textoinf'), '\nInforme PDF generado, puede consultarlo en: ' + dir + '/' +
+                          str(tstamp)+"_plot-report.pdf\n")
 
     self.emit(SIGNAL('prog1'), 100)
     self.emit(SIGNAL('finished'))
@@ -301,15 +344,18 @@ def execute_folds(self, fname, dir):
             suffix = os.path.basename(str(filef[i]))
             suffix = os.path.splitext(suffix)[0]
             self.emit(SIGNAL('add(QString)'), '\n>Dataset: ' + str(suffix))
-            if not m1[i] == '0':
-                self.emit(SIGNAL('add(int)'), 0)
-                mf.gen_folds(self, nfls[i], filef[i], dir, True, False, False)
-            if not m2[i] == '0':
-                self.emit(SIGNAL('add(int)'), 0)
-                mf.gen_folds(self, nfls[i], filef[i], dir, False, True, False)
-            if not m3[i] == '0':
-                self.emit(SIGNAL('add(int)'), 0)
-                mf.gen_folds(self, nfls[i], filef[i], dir, False, False, True)
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=FutureWarning)
+                warnings.filterwarnings("ignore", category=Warning)
+                if not m1[i] == '0':
+                    self.emit(SIGNAL('add(int)'), 0)
+                    mf.gen_folds(self, nfls[i], filef[i], dir, True, False, False)
+                if not m2[i] == '0':
+                    self.emit(SIGNAL('add(int)'), 0)
+                    mf.gen_folds(self, nfls[i], filef[i], dir, False, True, False)
+                if not m3[i] == '0':
+                    self.emit(SIGNAL('add(int)'), 0)
+                    mf.gen_folds(self, nfls[i], filef[i], dir, False, False, True)
 
     self.emit(SIGNAL('end'))
 
@@ -435,6 +481,11 @@ def execute_class(self, fname, dir):
                         parms.append('n_estimators= ' + str(n_estimators[j]) + ', criterion= ' + str(criterion_rf[j]))
                     if csbase[j] == 'SVM':
                         print gamma[j], C[j], kernel[j]
+                        try:
+                            gamma[j] = float(gamma[j])
+                        except ValueError:
+                            print 'no se puede conv a float'  # Será 'scale'
+                        print gamma[j]
                         call.append(BinaryRelevance(classifier=SVC(C=float(C[j]), kernel=str(kernel[j]), gamma=gamma[j], probability=True), require_dense=[
                          False, True]))
                         parms.append('C= ' + str(C[j]) + ', kernel= ' + str(kernel[j]) + ', gamma= ' + str(gamma[j]))
@@ -499,7 +550,9 @@ def execute_class(self, fname, dir):
                 for z in range(0, len(call)):
                     print '>' + str(call[z]).split('(')[0]
                     print '>' + str(stratif[z])
-                    mc.make_classif(self, nflds[i], fclass[i], call[z], parms[z], stratif[z], dir)
+                    with warnings.catch_warnings():
+                        warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
+                        mc.make_classif(self, nflds[i], fclass[i], call[z], parms[z], stratif[z], dir)
 
             else:
                 self.emit(SIGNAL('infoclassif'), 'ERROR1')

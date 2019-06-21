@@ -167,7 +167,7 @@ class PlotWindow(QMainWindow):
             for file in os.listdir(searchdir):
                 pixmap = QPixmap(os.path.join(searchdir, file))
                 if not pixmap.isNull():
-                    label = QLabel(pixmap=pixmap.scaled(640,480, Qt.KeepAspectRatio))
+                    label = QLabel(pixmap=pixmap.scaled(640, 480, Qt.KeepAspectRatio))
 
                     lay.addWidget(label)
 
@@ -175,7 +175,7 @@ class PlotWindow(QMainWindow):
                     tmp1 = QPushButton("Guardar")
                     self.saveP.append(tmp1)
                     lay.addWidget(self.saveP[i])
-                    i+=1
+                    i += 1
 
             if len(self.saveP) == 0:
                 # emitir señal de cerrar ventana
@@ -193,13 +193,13 @@ class PlotWindow(QMainWindow):
         else:
             print 'a cerrarse'
             self.emit(SIGNAL('del'), 'close')
-            #self.close()
+            # self.close()
 
     def closeEvent(self, event):
         global p1
         # Borrar carpeta temporal de gráficas
-        if os.path.isdir(dir+'/tmp/'):
-            shutil.rmtree(dir+'/tmp/')
+        if os.path.isdir(dir + '/tmp/'):
+            shutil.rmtree(dir + '/tmp/')
 
         print 'se cierra?'
         print self
@@ -219,14 +219,14 @@ class PlotWindow(QMainWindow):
 
         if route:
             for t in range(0, len(fnams)):
-                with open(route+'/'+fnams[t], 'wb') as f:
+                with open(route + '/' + fnams[t], 'wb') as f:
                     fr = open(dir + '/tmp/' + fnams[t], 'rb')
                     data = fr.read()
                     f.write(data)
-                    xmlname = str(route+'/'+fnams[t])
+                    xmlname = str(route + '/' + fnams[t])
                     f.close()
                     fr.close()
-            QMessageBox.about(self, "Correcto", u"Gráficas guardadas correctamente en el directorio: "+str(route))
+            QMessageBox.about(self, "Correcto", u"Gráficas guardadas correctamente en el directorio: " + str(route))
         else:
             QMessageBox.about(self, "Cancelado", u"Guardado cancelado")
 
@@ -239,7 +239,7 @@ class PlotWindow(QMainWindow):
                 dlg = os.path.splitext(str(dlg))[0] + '.png'
 
             with open(dlg, 'wb') as f:
-                fr = open(dir+'/tmp/'+fname, 'rb')
+                fr = open(dir + '/tmp/' + fname, 'rb')
                 data = fr.read()
                 f.write(data)
                 QMessageBox.about(self, "OK", u"Gráfica guardada, ruta: " + str(dlg))
@@ -257,7 +257,7 @@ class XmlW(QMainWindow):
 
         self.threadPool = []
 
-        self.load = QLineEdit() # Para cargar el xml a ejecutar
+        self.load = QLineEdit()  # Para cargar el xml a ejecutar
 
         self.load.setReadOnly(True)
         self.btn1 = QPushButton("Cargar fichero XML")
@@ -415,7 +415,7 @@ class XmlW(QMainWindow):
 
         if not xmlUI:
             logger = wdir + '/log.out'
-            fp=open(logger, 'a')
+            fp = open(logger, 'a')
             fp.write("\n>Se ha cancelado la ejecución")
             fp.close()
         else:
@@ -423,14 +423,60 @@ class XmlW(QMainWindow):
 
         # self.exec_folds()
 
-    def closeEvent(self, event):
-        if self.plots:
-            self.plots.close()
+    def closeEvent(self, event):  # Incluimos la misma funcionaldiad q en el metodo restart() para mayor integridad
+        global file, text, nfolds, classif, dir, xmlname, datasets, xmlUI, dsW, fW, cW, xW
+
+        reply = QMessageBox.question(self, u'Aviso',
+                                     u"Se está ejecutando el experimento, ¿seguro que desea salir y abortarlo?",
+                                     QMessageBox.Yes |
+                                     QMessageBox.No, QMessageBox.Yes)
+        if reply == QMessageBox.Yes:
+
+            if os.path.isdir(dir + '/tmp/'):  # Control de errores aplicado para que esto sea posible
+                shutil.rmtree(dir + '/tmp/')
+
+            if self.plots:
+                self.plots.close()
+
+            if dsW:
+                # La ventana de Dataset está/ha estado abierta
+                self.DataUI.close()
+
+            if fW:
+                self.FoldUI.close()
+
+            if xW:
+                xmlUI.close()
+                for i in range(0, len(xmlUI.threadPool)):
+                    xmlUI.threadPool[i].stop()
+
+            if cW:
+                self.ClassifUI.close()
+
+            self.btn1.setEnabled(True)
+            self.btn2.setEnabled(False)
+            self.btn3.setEnabled(False)
+            self.btn4.setEnabled(True)
+            file = ''
+            text = str('')
+            nfolds = 0
+            classif = []
+            dir = './'
+            xmlname = ''
+            datasets = []  # Contendra elems de la clase dset, estratif y metodo
+            xmlUI = None
+
+            dsW = False
+            fW = False
+            cW = False
+            xW = False
+        else:
+            event.ignore()
 
     def lst(self):
         if not xmlUI:
             logger = wdir + '/log.out'
-            fp=open(logger, 'a')
+            fp = open(logger, 'a')
             fp.write("\n>Se ha cancelado la ejecución")
             fp.close()
         else:
@@ -652,7 +698,7 @@ class ClassifW(QMainWindow):
     def add(self, text):
         if text == 'ERROR1':
             QMessageBox.critical(self, "Error", u"Error al ejecutar la clasificación con 0 folds, "
-                                 "configure primero las particiones en el paso anterior")
+                                                "configure primero las particiones en el paso anterior")
         elif text == 'ERROR2':
             QMessageBox.critical(self, "Error",
                                  u"Error al ejecutar la clasificación en el estratificado " +
@@ -744,7 +790,8 @@ class ClassifW(QMainWindow):
                 print etree.tostring(root, pretty_print=True)
 
                 reply = QMessageBox.question(self, u'Información',
-                                             u"Fichero guardado, ¿desea pasar a ejecutar el experimento?", QMessageBox.Yes |
+                                             u"Fichero guardado, ¿desea pasar a ejecutar el experimento?",
+                                             QMessageBox.Yes |
                                              QMessageBox.No, QMessageBox.Yes)
                 if reply == QMessageBox.Yes:
                     startxml = True
@@ -757,8 +804,8 @@ class ClassifW(QMainWindow):
     # Definir señal para progressbar -> podemos definir señales propias solo con nombre, no llamada
     #   ejmplo: en vez de add(int), poner 'progress'
     # https://stackoverflow.com/questions/8649233/threading-it-is-not-safe-to-use-pixmaps-outside-the-gui-thread#8649257
-        # self.threadPool[len(self.threadPool)-1].start()
-        # ctrl.exec_class(self, classif, nfolds, filename)
+    # self.threadPool[len(self.threadPool)-1].start()
+    # ctrl.exec_class(self, classif, nfolds, filename)
 
 
 class DatasetW(QMainWindow):
@@ -905,7 +952,6 @@ class DatasetW(QMainWindow):
         global datasets
         print len(datasets)
         for SelectedItem in self.list.selectedItems():
-
             item = self.list.takeItem(self.list.row(SelectedItem))
             datasets.pop(self.list.row(SelectedItem))
 
@@ -920,7 +966,6 @@ class DatasetW(QMainWindow):
     def partialsave(self):
         global datasets, file
         for selected in self.list.selectedItems():
-
             datasets[self.list.row(selected)].op1 = self.c1.isChecked()
             datasets[self.list.row(selected)].op2 = self.c2.isChecked()
             datasets[self.list.row(selected)].op3 = self.c3.isChecked()
@@ -943,8 +988,8 @@ class DatasetW(QMainWindow):
                 ds.add_op4(self.c4.isChecked())
                 datasets.append(ds)
                 # print datasets[0].ops
-                print 'dset: '+datasets[0].name
-                print 'len: '+str(len(datasets))
+                print 'dset: ' + datasets[0].name
+                print 'len: ' + str(len(datasets))
                 file = ''
                 self.le.setText('')
                 self.contents.append(u">Añadido correctamente")
@@ -1015,7 +1060,7 @@ class FoldsW(QMainWindow):
         self.btn5 = QPushButton("Siguiente")
 
         self.flabel1 = QLabel(u"Número de folds: ")
-        self.flabel = QLabel() #hidden
+        self.flabel = QLabel()  # hidden
         self.nlabels = QLineEdit()
 
         self.onlyInt = QIntValidator(0, 100)
@@ -1179,6 +1224,11 @@ class FoldsW(QMainWindow):
         # elems no deseados
         root = etree.Element("experimento")
 
+        for i in range(0, len(datasets)):
+            if not len(datasets[i].estratif) > 0:
+                QMessageBox.about(self, "Aviso", u"Aviso: No se han añadido estratificados "
+                                                        u"a uno o varios datasets")
+                return
         if self.nlabels.text() == '0':
             self.flabel3.setText("Aviso. No se pueden ejecutar particiones con 0 folds...")
             return
@@ -1284,8 +1334,8 @@ class MainApplication(QMainWindow):
         self.setFixedSize(850, 400)  # Tamanio por defecto de ventana
 
         framegm = self.frameGeometry()
-        #centerp = QApplication.desktop().screenGeometry().center()
-        #framegm.moveCenter(centerp)
+        # centerp = QApplication.desktop().screenGeometry().center()
+        # framegm.moveCenter(centerp)
         self.move(framegm.topLeft())
 
         self.setWindowTitle(u"Herramienta para el estudio del problema "
@@ -1327,12 +1377,29 @@ class MainApplication(QMainWindow):
 
     def startFoldsTab(self):
 
-        global aviso, fW
+        global fW
 
-        if len(datasets)<1:
+        warn = 0
+        if len(datasets) < 1:
             QMessageBox.about(self.DataUI, "Aviso", u"No se ha guardado ningún dataset, "
                                                     u"añada al menos uno para pasar a la siguiente ventana")
             return
+
+        for i in range(0, len(datasets)):
+            print datasets[i].op1
+            if not datasets[i].op1 and not datasets[i].op2 and not datasets[i].op3 \
+                    and not datasets[i].op4:
+                warn = 1
+        if warn == 1:
+            reply = QMessageBox.question(self.DataUI, 'Aviso',
+                                         u"No se han añadido medidas a uno o varios datasets,"
+                                         u" ¿quiere continuar de todas formas?",
+                                         QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+
+            if reply == QMessageBox.No:
+                return
+            else:
+                pass
 
         if not fW:
             self.FoldUI = FoldsW(self)
@@ -1413,13 +1480,13 @@ class MainApplication(QMainWindow):
                 return
         if dsW:
             self.DataUI.close()
-            dsW=False
+            dsW = False
         if fW:
             self.FoldUI.close()
-            fw=False
+            fw = False
         if cW:
             self.ClassifUI.close()
-            cW=False
+            cW = False
 
         if xW:
             self.btn1.setEnabled(False)
@@ -1436,8 +1503,8 @@ class MainApplication(QMainWindow):
     def restart(self):
         global file, text, nfolds, classif, dir, xmlname, datasets, xmlUI, dsW, fW, cW, xW
 
-        if os.path.isdir(dir+'/tmp/'):  # Control de errores aplicado para que esto sea posible
-            shutil.rmtree(dir+'/tmp/')
+        if os.path.isdir(dir + '/tmp/'):  # Control de errores aplicado para que esto sea posible
+            shutil.rmtree(dir + '/tmp/')
 
         if dsW:
             # La ventana de Dataset está/ha estado abierta
@@ -1479,6 +1546,7 @@ class MainApplication(QMainWindow):
                                      QMessageBox.No, QMessageBox.Yes)
 
         if reply == QMessageBox.Yes:
+            self.restart()
             event.accept()
         else:
             event.ignore()

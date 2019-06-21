@@ -324,13 +324,13 @@ def getargs(self, metodo):
                                              u"Seleccione el valor de kernel para SVM: ",
                                              kern, 0, False)
             C, _ = QInputDialog.getDouble(self, u"Parámetro C - SVM", u"Seleccione el valor de C para SVM", 1.0,
-                                          decimals=5, min=0.0, max=10.0)
+                                          decimals=5, min=0.00001, max=10.0)
 
             if kernel == 'poly' or kernel == 'sigmoid' or kernel == 'rbf':
                 # Necesitamos gamma
                 gamma, _ = QInputDialog.getDouble(self, u'Parámetro gamma - SVM',
                                                   u"Introduzca el valor de gamma para SVM: ", 0.0, decimals=5,
-                                                  min=0.0, max=10.0)
+                                                  min=0.00001, max=10.0)
                 if gamma == 0.0:
                     gamma = 'scale'
             else:

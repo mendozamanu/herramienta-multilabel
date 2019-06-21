@@ -141,6 +141,7 @@ def execute_dset(self, fname, dir):
         save = str(dir) + '/' + 'tmp/'
         print save
         print fileds[0]
+        active = 0
         for i in range(0, len(fileds)):
             cnt = 0
             if not op1[i] == 'False':
@@ -166,6 +167,7 @@ def execute_dset(self, fname, dir):
                 prog = 100 / cnt
                 if not op1[i] == 'False':
 
+                    active = 1
                     df = md.convert(self, fileds[i], dir)
                     self.emit(SIGNAL('prog1'), prog/2)
 
@@ -271,10 +273,11 @@ def execute_dset(self, fname, dir):
                         parts.append(Image(save + dat + '_freclbs.png', width=640, height=480, kind='proportional'))
                         parts.append(PageBreak())
 
-                if os.path.exists(save) or op1[i] == 'True':
-                    doc.build(parts)
-                self.emit(SIGNAL('textoinf'), '\nInforme PDF generado, puede consultarlo en: ' + dir + '/' +
-                          str(tstamp)+"_plot-report.pdf\n")
+        if os.path.exists(save) or active == 1:
+            doc.build(parts)
+            print 'docum generado'
+            self.emit(SIGNAL('textoinf'), '\nInforme PDF generado, puede consultarlo en: ' + dir + '/' +
+                      str(tstamp)+"_plot-report.pdf\n")
 
     self.emit(SIGNAL('prog1'), 100)
     self.emit(SIGNAL('finished'))

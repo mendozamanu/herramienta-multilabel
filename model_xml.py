@@ -352,13 +352,23 @@ def execute_folds(self, fname, dir):
                 warnings.filterwarnings("ignore", category=Warning)
                 if not m1[i] == '0':
                     self.emit(SIGNAL('add(int)'), 0)
-                    mf.gen_folds(self, nfls[i], filef[i], dir, True, False, False)
+                    try:
+                        mf.gen_folds(self, nfls[i], filef[i], dir, True, False, False)
+                    except:
+                        print "Se ha producido un error en la generación de los folds, método: "+ str(m1[i])
+
                 if not m2[i] == '0':
                     self.emit(SIGNAL('add(int)'), 0)
-                    mf.gen_folds(self, nfls[i], filef[i], dir, False, True, False)
+                    try:
+                        mf.gen_folds(self, nfls[i], filef[i], dir, False, True, False)
+                    except:
+                        print "Se ha producido un error en la generación de los folds, método: "+ str(m2[i])
                 if not m3[i] == '0':
                     self.emit(SIGNAL('add(int)'), 0)
-                    mf.gen_folds(self, nfls[i], filef[i], dir, False, False, True)
+                    try:
+                        mf.gen_folds(self, nfls[i], filef[i], dir, False, False, True)
+                    except:
+                        print "Se ha producido un error en la generación de los folds, método: "+ str(m3[i])
 
     self.emit(SIGNAL('end'))
 
@@ -552,10 +562,14 @@ def execute_class(self, fname, dir):
                 self.emit(SIGNAL('infoclassif'), u'\n>Dataset: ' + str(suffix))
                 for z in range(0, len(call)):
                     print '>' + str(call[z]).split('(')[0]
-                    print '>' + str(stratif[z])
+                    print '>' + str(stratif[z])  #TODO:     print '>' + str(stratif[z])
+                                                #  IndexError: list index out of range
                     with warnings.catch_warnings():
                         warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
-                        mc.make_classif(self, nflds[i], fclass[i], call[z], parms[z], stratif[z], dir)
+                        try:
+                            mc.make_classif(self, nflds[i], fclass[i], call[z], parms[z], stratif[z], dir)
+                        except:
+                            print "Se ha producido un error durante la clasificacion, método: " + str(call[z]).split('(')[0]
 
             else:
                 self.emit(SIGNAL('infoclassif'), 'ERROR1')

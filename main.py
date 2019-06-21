@@ -28,7 +28,7 @@ mk2 = False
 mk3 = False
 classif = []
 dir = './'
-wdir = ''
+wdir = './'
 xmlname = ''
 startxml = False
 datasets = []  # Contendra elems de la clase dset, estratif y metodo
@@ -40,6 +40,8 @@ cW = False
 xW = False
 
 p1 = False  # PlotW created flag
+
+executing = False
 
 proxy = QIdentityProxyModel()
 
@@ -198,10 +200,10 @@ class PlotWindow(QMainWindow):
     def closeEvent(self, event):
         global p1
         # Borrar carpeta temporal de gráficas
-        if os.path.isdir(dir + '/tmp/'):
+        if not dir == '' and os.path.isdir(dir + '/tmp/'):
             shutil.rmtree(dir + '/tmp/')
 
-        print 'se cierra?'
+        print 'se cierra?' # No se cierra si cerramos la ventna xmlW, si pulsamos reiniciar si func ok
         print self
         if event == 'close':
             print 'entra?'
@@ -211,7 +213,7 @@ class PlotWindow(QMainWindow):
 
         p1 = False
 
-        if xmlUI:
+        if xmlUI: # TODO: Problema here - entra tras cerrar xmlWind (X) minor (no afecta, puesto q no ejec nada dentro)
             xmlUI.exec_folds()
 
     def save_complete(self, fnams):
@@ -223,7 +225,7 @@ class PlotWindow(QMainWindow):
                     fr = open(dir + '/tmp/' + fnams[t], 'rb')
                     data = fr.read()
                     f.write(data)
-                    xmlname = str(route + '/' + fnams[t])
+
                     f.close()
                     fr.close()
             QMessageBox.about(self, "Correcto", u"Gráficas guardadas correctamente en el directorio: " + str(route))
@@ -263,6 +265,7 @@ class XmlW(QMainWindow):
         self.btn1 = QPushButton("Cargar fichero XML")
         self.workingDir = QLineEdit()  # Para cargar el xml a ejecutar
         self.workingDir.setReadOnly(True)
+        self.workingDir.setText(wdir)
         self.btn2 = QPushButton("Seleccionar directorio de trabajo")
         self.info = QTextEdit()
         self.info.setReadOnly(True)
@@ -423,55 +426,15 @@ class XmlW(QMainWindow):
 
         # self.exec_folds()
 
-    def closeEvent(self, event):  # Incluimos la misma funcionaldiad q en el metodo restart() para mayor integridad
-        global file, text, nfolds, classif, dir, xmlname, datasets, xmlUI, dsW, fW, cW, xW
+    def closeEvent(self, event):
 
-        reply = QMessageBox.question(self, u'Aviso',
-                                     u"Se está ejecutando el experimento, ¿seguro que desea salir y abortarlo?",
-                                     QMessageBox.Yes |
-                                     QMessageBox.No, QMessageBox.Yes)
-        if reply == QMessageBox.Yes:
-
-            if os.path.isdir(dir + '/tmp/'):  # Control de errores aplicado para que esto sea posible
-                shutil.rmtree(dir + '/tmp/')
-
-            if self.plots:
-                self.plots.close()
-
-            if dsW:
-                # La ventana de Dataset está/ha estado abierta
-                self.DataUI.close()
-
-            if fW:
-                self.FoldUI.close()
-
-            if xW:
-                xmlUI.close()
-                for i in range(0, len(xmlUI.threadPool)):
-                    xmlUI.threadPool[i].stop()
-
-            if cW:
-                self.ClassifUI.close()
-
-            self.btn1.setEnabled(True)
-            self.btn2.setEnabled(False)
-            self.btn3.setEnabled(False)
-            self.btn4.setEnabled(True)
-            file = ''
-            text = str('')
-            nfolds = 0
-            classif = []
-            dir = './'
-            xmlname = ''
-            datasets = []  # Contendra elems de la clase dset, estratif y metodo
-            xmlUI = None
-
-            dsW = False
-            fW = False
-            cW = False
-            xW = False
-        else:
-            event.ignore()
+        if self.plots:
+            self.plots.close()
+        global xmlUI, xW, xmlname, dir
+        xmlUI = None
+        xW = False
+        xmlname = ''
+        dir = ''
 
     def lst(self):
         if not xmlUI:
@@ -485,6 +448,8 @@ class XmlW(QMainWindow):
 
     def execute(self):
         self.info.clear()
+        global executing
+        executing = True
         self.exec_ds()
 
     def exec_ds(self):
@@ -1503,9 +1468,11 @@ class MainApplication(QMainWindow):
     def restart(self):
         global file, text, nfolds, classif, dir, xmlname, datasets, xmlUI, dsW, fW, cW, xW
 
-        if os.path.isdir(dir + '/tmp/'):  # Control de errores aplicado para que esto sea posible
+        if not dir == '' and os.path.isdir(dir + '/tmp/'):  # Control de errores aplicado para que esto sea posible
+            print dir + '/tmp/'
             shutil.rmtree(dir + '/tmp/')
 
+        print 'reiniciando...'
         if dsW:
             # La ventana de Dataset está/ha estado abierta
             self.DataUI.close()
@@ -1514,9 +1481,9 @@ class MainApplication(QMainWindow):
             self.FoldUI.close()
 
         if xW:
-            xmlUI.close()
             for i in range(0, len(xmlUI.threadPool)):
                 xmlUI.threadPool[i].stop()
+            xmlUI.close()
 
         if cW:
             self.ClassifUI.close()

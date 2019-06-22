@@ -248,7 +248,11 @@ def make_classif(self, nfolds, fname, cl, parm, stratif, dir):
 
     cbase = str(cl).split('(')[1]
     cbase = cbase.split('=')[1]
-    fd.write(cbase + ';')  # Clasific base
+
+    if not str(cl).split('(')[0] == 'MLkNN':
+        fd.write(cbase + ';')  # Clasific base
+    else:
+        fd.write('MLkNN' + ';')
 
     fd.write(parm + ';')  # Params de los metodos
 

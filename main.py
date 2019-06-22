@@ -430,11 +430,12 @@ class XmlW(QMainWindow):
 
         if self.plots:
             self.plots.close()
-        global xmlUI, xW, xmlname, dir
+        global xmlUI, xW, xmlname, dir, p1
         xmlUI = None
         xW = False
+        p1 = True
         xmlname = ''
-        dir = ''
+        dir = './'
 
     def lst(self):
         if not xmlUI:

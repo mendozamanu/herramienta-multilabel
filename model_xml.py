@@ -179,14 +179,20 @@ def execute_dset(self, fname, dir):
                     parts.append(p)
 
                     if os.path.isfile(report):
-                        fo = open(report, 'r')
+                        try:
+                            fo = open(report, 'r')
+                        except:
+                            print "Error al leer medidas del dataset"
 
                         headers = []
                         data = []
 
                         for o in range(0, 6):
-                            inline = fo.readline()
-                            part = inline.split(': ')
+                            try:
+                                inline = fo.readline()
+                                part = inline.split(': ')
+                            except:
+                                pass # Derivado del error de arriba
 
                             if part[0] == 'Instances':
                                 headers.append(u"Nº de instancias")
@@ -215,12 +221,13 @@ def execute_dset(self, fname, dir):
                         parts.append(Spacer(1, 0.4 * inch))
                         tmp = []
                         for l in range(0, 6):
-                            tmp.append(headers[l:l+1] + data[l:l+1])
+                            if len(headers)>0 and len(data)>0:
+                                tmp.append(headers[l:l+1] + data[l:l+1])
 
                         print tmp
 
                         t = Table(tmp, rowHeights=(10*mm, 10*mm, 10*mm, 10*mm, 10*mm, 10*mm), colWidths=(70*mm, 60*mm),
-                                  style=[('GRID',(0,0),(-1,-1),0.5,colors.black), ('BACKGROUND', (0, 0), (0, -1), colors.silver),
+                                  style=[('GRID',(0,0),(-1,-1),0.5,colors.black), ('BACKGROUND',(0,0),(0,-1), colors.silver),
                                         ('ALIGN',(0,0),(-1,-1),'CENTER'), ('VALIGN',(0,0),(-1,-1),'MIDDLE'),
                                         ])
                         parts.append(t)
@@ -232,52 +239,65 @@ def execute_dset(self, fname, dir):
                     if not os.path.exists(save):
                         os.makedirs(save)
                     prog += prog
-                    md.coov(self, fileds[i], dir, True, False)
-                    self.emit(SIGNAL('prog1'), prog)
+                    try:
+                        md.coov(self, fileds[i], dir, True, False)
+                        self.emit(SIGNAL('prog1'), prog)
 
-                    if os.path.isfile(save + dat + '_corrlabls.png'):
-                        parts.append(Spacer(1, 0.2 * inch))
-                        p = Paragraph(u"Gráfica de correlación entre etiquetas", styles["Heading2"])
-                        parts.append(p)
+                        if os.path.isfile(save + dat + '_corrlabls.png'):
+                            parts.append(Spacer(1, 0.2 * inch))
+                            p = Paragraph(u"Gráfica de correlación entre etiquetas", styles["Heading2"])
+                            parts.append(p)
 
-                        parts.append(Image(save + dat + '_corrlabls.png'))
-                        parts.append(PageBreak())
+                            parts.append(Image(save + dat + '_corrlabls.png'))
+                            parts.append(PageBreak())
+                    except:
+                        print u'Error en la generación de gráfica de correlación de etiquetas'
 
                 if not op3[i] == 'False':
                     if not os.path.exists(save):
                         os.makedirs(save)
                     prog += prog
-                    md.coov(self, fileds[i], dir, False, True)
-                    self.emit(SIGNAL('prog1'), prog)
+                    try:
+                        md.coov(self, fileds[i], dir, False, True)
+                        self.emit(SIGNAL('prog1'), prog)
 
-                    if os.path.isfile(save + dat + '_corrordered.png'):
-                        parts.append(Spacer(1, 0.2 * inch))
-                        p = Paragraph(u"Gráfica de distribucion de la correlación", styles["Heading2"])
-                        parts.append(p)
+                        if os.path.isfile(save + dat + '_corrordered.png'):
+                            parts.append(Spacer(1, 0.2 * inch))
+                            p = Paragraph(u"Gráfica de distribucion de la correlación", styles["Heading2"])
+                            parts.append(p)
 
-                        parts.append(Image(save + dat + '_corrordered.png'))
-                        parts.append(PageBreak())
+                            parts.append(Image(save + dat + '_corrordered.png'))
+                            parts.append(PageBreak())
+                    except:
+                        print u'Error en la generación de gráfica de distribución de la correlación'
+
                 if not op4[i] == 'False':
                     if not os.path.exists(save):
                         os.makedirs(save)
                     prog += prog
-                    md.labfrecplot(insts, fileds[i], dir)
-                    self.emit(SIGNAL('prog1'), prog)
+                    try:
+                        md.labfrecplot(insts, fileds[i], dir)
+                        self.emit(SIGNAL('prog1'), prog)
 
-                    if os.path.isfile(save + dat + '_freclbs.png'):
+                        if os.path.isfile(save + dat + '_freclbs.png'):
 
-                        parts.append(Spacer(1, 0.2 * inch))
-                        p = Paragraph(u"Gráfica de frecuencia de las etiquetas", styles["Heading2"])
-                        parts.append(p)
+                            parts.append(Spacer(1, 0.2 * inch))
+                            p = Paragraph(u"Gráfica de frecuencia de las etiquetas", styles["Heading2"])
+                            parts.append(p)
 
-                        parts.append(Image(save + dat + '_freclbs.png', width=640, height=480, kind='proportional'))
-                        parts.append(PageBreak())
+                            parts.append(Image(save + dat + '_freclbs.png', width=640, height=480, kind='proportional'))
+                            parts.append(PageBreak())
+                    except:
+                        print u'Error en la generación de gráfica de frecuencias de las etiquetas'
 
         if os.path.exists(save) or active == 1:
-            doc.build(parts)
-            print 'docum generado'
-            self.emit(SIGNAL('textoinf'), '\nInforme PDF generado, puede consultarlo en: ' + dir + '/' +
-                      str(tstamp)+"_plot-report.pdf\n")
+            try:
+                doc.build(parts)
+                print 'docum generado'
+                self.emit(SIGNAL('textoinf'), '\nInforme PDF generado, puede consultarlo en: ' + dir + '/' +
+                          str(tstamp)+"_plot-report.pdf\n")
+            except:
+                print 'Error al generar el documento PDF'
 
     self.emit(SIGNAL('prog1'), 100)
     self.emit(SIGNAL('finished'))

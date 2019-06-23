@@ -412,6 +412,8 @@ def execute_class(self, fname, dir):
     call = []
     parms = []
     estratificado = ''
+    meth_count = []
+    aux = 0
 
     if not str(fname) == '':
         tree = etree.parse(str(fname))
@@ -426,6 +428,9 @@ def execute_class(self, fname, dir):
                     fclass.append(str(name.get('filename')))
                     clasactive = 1
                     time.sleep(1)
+                    if aux >= 1:
+                        meth_count.append(aux)
+                        aux=0
                 if name.get('nfolds'):
                     self.emit(SIGNAL('infoclassif'), '>nfolds: ' + str(name.get('nfolds')))
                     nflds.append(int(name.get('nfolds')))
@@ -444,6 +449,7 @@ def execute_class(self, fname, dir):
                         meths.append(str(name.get('method')))
                         stratif.append(str(estratificado))
                         clasactive = 1
+                        aux+=1
                     if name.get('cbase'):
                         if not name.get('cbase') == '-':
                             self.emit(SIGNAL('infoclassif'), u'>>Clasificador base: ' + str(name.get('cbase')))
@@ -496,11 +502,23 @@ def execute_class(self, fname, dir):
             print 'terminado - paso no activado'
             self.emit(SIGNAL('progress'), 100)
             self.emit(SIGNAL('infoclassif'), u'\nTerminado\n')
+
+    meth_count.append(aux)  # Le pasamos el contador del ultimo dset ya q no vuelve a entrar para ponerlo
+    aux=0
     self.emit(SIGNAL('log'))
+    print '---------------------'
+    print fclass
+    print meth_count
+    print stratif
+    print csbase
+    print meths
+    print '----------------------'
 
     if clasactive == 1:
         print 'estoy para clasificar.....'
         for i in range(0, len(fclass)):
+            call = []
+            parms = []
             for j in range(0, len(meths)):
                 if meths[j] == 'Binary Relevance':
                     if csbase[j] == 'kNN':
@@ -530,66 +548,73 @@ def execute_class(self, fname, dir):
                 if meths[j] == 'Label Powerset':
                     if csbase[j] == 'kNN':
                         print n_neighbors[j]
-                        call.append(BinaryRelevance(classifier=KNeighborsClassifier(n_neighbors=int(n_neighbors[j])), require_dense=[
+                        call.append(LabelPowerset(classifier=KNeighborsClassifier(n_neighbors=int(n_neighbors[j])), require_dense=[
                          False, True]))
                         parms.append('n_neighbors= ' + str(n_neighbors[j]))
                     if csbase[j] == 'Random Forests':
                         print n_estimators[j]
-                        call.append(BinaryRelevance(classifier=RandomForestClassifier(n_estimators=int(n_estimators[j]), criterion=str(criterion_rf[j])), require_dense=[
+                        call.append(LabelPowerset(classifier=RandomForestClassifier(n_estimators=int(n_estimators[j]), criterion=str(criterion_rf[j])), require_dense=[
                          False, True]))
                         parms.append('n_estimators= ' + str(n_estimators[j]) + ', criterion= ' + str(criterion_rf[j]))
                     if csbase[j] == 'SVM':
                         print gamma[j], C[j], kernel[j]
-                        call.append(BinaryRelevance(classifier=SVC(C=float(C[j]), kernel=str(kernel[j]), gamma=gamma[j], probability=True), require_dense=[
+                        call.append(LabelPowerset(classifier=SVC(C=float(C[j]), kernel=str(kernel[j]), gamma=gamma[j], probability=True), require_dense=[
                          False, True]))
                         parms.append('C= ' + str(C[j]) + ', kernel= ' + str(kernel[j]) + ', gamma= ' + str(gamma[j]))
                     if csbase[j] == 'Decision Tree':
                         print criterion_dt[j]
-                        call.append(BinaryRelevance(classifier=DecisionTreeClassifier(criterion=str(criterion_dt[j])), require_dense=[
+                        call.append(LabelPowerset(classifier=DecisionTreeClassifier(criterion=str(criterion_dt[j])), require_dense=[
                          False, True]))
                         parms.append('criterion = ' + str(criterion_dt[j]))
                 if meths[j] == 'Classifier Chain':
                     if csbase[j] == 'kNN':
                         print n_neighbors[j]
-                        call.append(BinaryRelevance(classifier=KNeighborsClassifier(n_neighbors=int(n_neighbors[j])), require_dense=[
+                        call.append(ClassifierChain(classifier=KNeighborsClassifier(n_neighbors=int(n_neighbors[j])), require_dense=[
                          False, True]))
                         parms.append('n_neighbors= ' + str(n_neighbors[j]))
                     if csbase[j] == 'Random Forests':
                         print n_estimators[j]
-                        call.append(BinaryRelevance(classifier=RandomForestClassifier(n_estimators=int(n_estimators[j]), criterion=str(criterion_rf[j])), require_dense=[
+                        call.append(ClassifierChain(classifier=RandomForestClassifier(n_estimators=int(n_estimators[j]), criterion=str(criterion_rf[j])), require_dense=[
                          False, True]))
                         parms.append('n_estimators= ' + str(n_estimators[j]) + ', criterion= ' + str(criterion_rf[j]))
                     if csbase[j] == 'SVM':
                         print gamma[j], C[j], kernel[j]
-                        call.append(BinaryRelevance(classifier=SVC(C=float(C[j]), kernel=str(kernel[j]), gamma=gamma[j], probability=True), require_dense=[
+                        call.append(ClassifierChain(classifier=SVC(C=float(C[j]), kernel=str(kernel[j]), gamma=gamma[j], probability=True), require_dense=[
                          False, True]))
                         parms.append('C= ' + str(C[j]) + ', kernel= ' + str(kernel[j]) + ', gamma= ' + str(gamma[j]))
                     if csbase[j] == 'Decision Tree':
                         print criterion_dt[j]
-                        call.append(BinaryRelevance(classifier=DecisionTreeClassifier(criterion=str(criterion_dt[j])), require_dense=[
+                        call.append(ClassifierChain(classifier=DecisionTreeClassifier(criterion=str(criterion_dt[j])), require_dense=[
                          False, True]))
                         parms.append('criterion = ' + str(criterion_dt[j]))
                 if meths[j] == 'MlKNN':
                     call.append(MLkNN(k=int(k[j])))
                     parms.append('k= ' + str(k[j]))
 
-            print call
-            print parms
-
+            #print call
+            #print parms
+        rn = 0
+        for i in range(0, len(fclass)):
             if nflds[i] > 0:
                 suffix = os.path.basename(str(fclass[i]))
                 suffix = os.path.splitext(suffix)[0]
                 self.emit(SIGNAL('infoclassif'), u'\n>Dataset: ' + str(suffix))
-                for z in range(0, len(call)):
+
+                for z in range(rn, rn+meth_count[i]):
                     print '>' + str(call[z]).split('(')[0]
-                    print '>' + str(stratif[z])  #TODO:     print '>' + str(stratif[z])
-                                                #  IndexError: list index out of range
-                    with warnings.catch_warnings():
-                        warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
-                        try:
+                    print '>' + str(stratif[z])
+                    print z
+                    try:
+                        with warnings.catch_warnings():
+                            warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
                             mc.make_classif(self, nflds[i], fclass[i], call[z], parms[z], stratif[z], dir)
-                        except:
-                            print "Se ha producido un error durante la clasificacion, método: " + str(call[z]).split('(')[0]
+                    except Exception as e:
+                        print "Se ha producido un error durante la clasificación, método: " + str(call[z]).split('(')[0]
+                        print e
+                        self.emit(SIGNAL('infoclassif'), u"☒ Se ha producido un error durante "
+                                                         u"la clasificación, método: " + str(call[z]).split('(')[0]+
+                                  '\nError: ' + str(e))
+                rn = meth_count[i]
 
             else:
                 self.emit(SIGNAL('infoclassif'), 'ERROR1')

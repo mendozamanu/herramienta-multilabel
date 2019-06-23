@@ -177,6 +177,7 @@ def make_classif(self, nfolds, fname, cl, parm, stratif, dir):
         fp.close()
 
     # TODO: el msnj se muestra duplicado en prueba21.xml (error en clasif con SVM)
+    print 'solo una vez por ejecuc..'
     tmp = u"Ejecutando clasificación " + str(cl).split('(')[0] + " con el estratificado: " + stratif
 
     self.emit(SIGNAL('infoclassif'), tmp)

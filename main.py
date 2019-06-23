@@ -647,7 +647,11 @@ class ClassifW(QMainWindow):
                     datasets[it.row()].estratif[i].set_methods(c)
 
             # print datasets[it.row()].estratif.methods
-            self.lst2.addItem(str(self.methods.currentText()) + ', ' + str(self.base.currentText()) + ' ' + str(args))
+            dname = str(datasets[it.row()].name)
+            dname = os.path.basename(dname)
+            dname = os.path.splitext(dname)[0]
+            self.lst2.addItem(dname + ': ' + str(self.methods.currentText()) + ', '
+                              + str(self.base.currentText()) + ' ' + str(args))
 
             self.txt.setText(u"Añadido correctamente")
 

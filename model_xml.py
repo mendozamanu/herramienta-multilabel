@@ -662,7 +662,7 @@ def execute_class(self, fname, dir):
                         except Exception as e:
                             self.emit(SIGNAL('logcns_c'), "Se ha producido un error durante la clasificación, método: "
                                       + str(call[z]).split('(')[0]+'\n')
-                            self.emit(SIGNAL('logcns_c'), e+'\n')
+                            self.emit(SIGNAL('logcns_c'), str(e)+'\n')
                             self.emit(SIGNAL('infoclassif'), u"☒ Se ha producido un error durante "
                                                              u"la clasificación, método: " + str(call[z]).split('(')[0]+
                                       '\nError: ' + str(e))

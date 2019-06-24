@@ -22,7 +22,6 @@ def open_file(self):
     if dlg.exec_():
         filenames = dlg.selectedFiles()
         f = open(filenames[0], 'r')
-        self.le.setText(filenames[0])
         # self.contents.setText(u"Cargando el dataset...")
         with f:
             line = f.readline()
@@ -38,16 +37,11 @@ def open_file(self):
                 QMessageBox.about(self, "Error", "Error en el formato de la cabecera del fichero de dataset")
                 self.contents.append("Error en el formato de la cabecera del fichero de dataset")
                 # sys.exit("Wrong format for the dataset header")
-                self.le.setText('')
                 return ''
         # self.contents.append(filenames[0])
         return filenames[0]
     else:
-        if self.le.text() is not '':
-            return self.le.text()
-        else:
-            self.le.setText('')
-            return ''
+        return ''
 
 
 # Operaciones sobre los datasets

@@ -176,8 +176,6 @@ def make_classif(self, nfolds, fname, cl, parm, stratif, dir):
             'f1 score (macro)↑;Recall (macro)↑' + '\n')
         fp.close()
 
-    # TODO: el msnj se muestra duplicado en prueba21.xml (error en clasif con SVM)
-    print 'solo una vez por ejecuc..'
     tmp = u"Ejecutando clasificación " + str(cl).split('(')[0] + " con el estratificado: " + stratif
 
     self.emit(SIGNAL('infoclassif'), tmp)
@@ -447,25 +445,20 @@ def configure(self, classif, nfolds, fname):
     global C
     global gamma
 
-    print classif
-
     self.txt.append(u"Configurando parámetros para los algoritmos de clasificación seleccionados...")
     for i in range(0, len(classif)):
         self.child3.set("filename", str(fname))
         self.child3.set("methods", str(len(classif)))
         self.child3.set("nfolds", str(self.nfls.text()))
         if self.checkmt1.isChecked():
-            print self.checkmt1.text()
             self.child3.set("stratif1", str(self.checkmt1.text()))
         else:
             self.child3.set("stratif1", '')
         if self.checkmt2.isChecked():
-            print self.checkmt2.text()
             self.child3.set("stratif2", str(self.checkmt2.text()))
         else:
             self.child3.set("stratif2", '')
         if self.checkmt3.isChecked():
-            print self.checkmt3.text()
             self.child3.set("stratif3", str(self.checkmt3.text()))
         else:
             self.child3.set("stratif3", '')
@@ -514,7 +507,7 @@ def configure(self, classif, nfolds, fname):
                                                       u"Introduzca el valor de gamma para SVM: ", 0.0, decimals=5)
                     if gamma == 0.0:
                         gamma = 'scale'
-                    self.child3.set("gamma" + str(i), str(gamma))
+                    self.child3.set("gamma" + str(i), str(float(gamma)))
 
             if classif[i][1] == 'Decision Tree':
                 # criterion

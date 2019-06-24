@@ -8,6 +8,7 @@ from PyQt4.QtCore import *
 import ctrl
 from lxml import etree
 from functools import partial
+import io
 
 # TODO https://stackoverflow.com/questions/3605680/creating-a-simple-xml-file-using-python#3605831 #usamos lxml
 
@@ -140,10 +141,10 @@ class PlotWindow(QMainWindow):
         self.setMaximumSize(700, 900)
 
         framegm = self.frameGeometry()
-        print framegm.bottomLeft()
+
         self.move(framegm.bottomLeft())
 
-        print 'me inicializo ok'
+        self.log("Inicializando ventana PlotWindow...")
         searchdir = str(dir) + '/' + 'tmp/'
         self.setWindowTitle(u"Herramienta para el estudio del problema "
                             u"de desequilibrio en problemas de clasificación multietiqueta")
@@ -193,9 +194,18 @@ class PlotWindow(QMainWindow):
                 self.saveP[p].clicked.connect(partial(self.save, tosave[p]))
 
         else:
-            print 'a cerrarse'
+            self.log("Cerrando ventana...")
             self.emit(SIGNAL('del'), 'close')
             # self.close()
+
+    def log(self, txt):
+        if not os.path.exists(wdir+'/log/'):
+            os.makedirs(wdir+'/log/')
+        logger = wdir + '/log/dump.log'
+        fp = io.open(logger, 'a', encoding='utf-8')
+        txt = unicode(txt, 'utf-8')
+        fp.write(txt)
+        fp.close()
 
     def closeEvent(self, event):
         global p1
@@ -203,17 +213,14 @@ class PlotWindow(QMainWindow):
         if not dir == '' and os.path.isdir(dir + '/tmp/'):
             shutil.rmtree(dir + '/tmp/')
 
-        print 'se cierra?' # No se cierra si cerramos la ventna xmlW, si pulsamos reiniciar si func ok
-        print self
         if event == 'close':
-            print 'entra?'
             self.destroy()
         else:
             event.accept()
 
         p1 = False
 
-        if xmlUI: # TODO: Problema here - entra tras cerrar xmlWind (X) minor (no afecta, puesto q no ejec nada dentro)
+        if xmlUI:
             xmlUI.exec_folds()
 
     def save_complete(self, fnams):
@@ -229,8 +236,10 @@ class PlotWindow(QMainWindow):
                     f.close()
                     fr.close()
             QMessageBox.about(self, "Correcto", u"Gráficas guardadas correctamente en el directorio: " + str(route))
+            self.log("Gráficas - guardado correcto")
         else:
             QMessageBox.about(self, "Cancelado", u"Guardado cancelado")
+            self.log("Gráficas - guardado cancelado")
 
     def save(self, fname):
 
@@ -245,6 +254,7 @@ class PlotWindow(QMainWindow):
                 data = fr.read()
                 f.write(data)
                 QMessageBox.about(self, "OK", u"Gráfica guardada, ruta: " + str(dlg))
+                self.log("Gráfica " + str(fname) + " - guardado correcto")
 
                 f.close()
                 fr.close()
@@ -380,6 +390,7 @@ class XmlW(QMainWindow):
             self.info.append(text)
 
     def addc(self, txt):  # Classification operations
+
         if txt == 'Head':
             self.info.append(u"\n3. Ejecutar clasificación\nInformación cargada:")
         elif txt == 'ERROR1':
@@ -391,6 +402,8 @@ class XmlW(QMainWindow):
                                  ", revise las particiones generadas o vuelva a generarlas")
         else:
             self.info.append(txt)
+            if txt == u'\nTerminado\n':
+                self.log()
 
     def prog1(self, progr):
         self.progress.setValue(progr)
@@ -398,8 +411,21 @@ class XmlW(QMainWindow):
     def upd(self, progress):
         self.progress.setValue(progress)
 
+    def logconsole(self, txt):
+        if not os.path.exists(wdir + '/log/'):
+            os.makedirs(wdir + '/log/')
+
+        logger = wdir + '/log/dump.log'
+        fp = io.open(logger, 'a', encoding='utf-8')
+        txt = unicode(txt, 'utf-8')
+        fp.write(txt)
+        fp.close()
+
     def log(self):
-        logger = wdir + '/log.out'
+        if not os.path.exists(wdir + '/log/'):
+            os.makedirs(wdir + '/log/')
+
+        logger = wdir + '/log/window.log'
         dump = self.info.toPlainText()
         dump = dump.toUtf8()
         fp = open(logger, 'w')
@@ -417,7 +443,7 @@ class XmlW(QMainWindow):
                 xmlUI.exec_folds()
 
         if not xmlUI:
-            logger = wdir + '/log.out'
+            logger = wdir + '/log/window.log'
             fp = open(logger, 'a')
             fp.write("\n>Se ha cancelado la ejecución")
             fp.close()
@@ -433,25 +459,32 @@ class XmlW(QMainWindow):
         global xmlUI, xW, xmlname, dir, p1
         xmlUI = None
         xW = False
-        p1 = True
+        p1 = False # No vuelve a cargar la ventana si cerramos con (X) la ventana - p1 a true
         xmlname = ''
         dir = './'
+        self.btn3.setEnabled(True)
 
     def lst(self):
         if not xmlUI:
-            logger = wdir + '/log.out'
+            logger = wdir + '/log/window.log'
             fp = open(logger, 'a')
             fp.write("\n>Se ha cancelado la ejecución")
             fp.close()
         else:
             self.log()
             self.exec_class()
+            self.log()
+            self.btn3.setEnabled(True)
 
     def execute(self):
         self.info.clear()
-        global executing
-        executing = True
-        self.exec_ds()
+        if not xmlname == '':
+            self.btn3.setEnabled(False)
+            global executing
+            executing = True
+            self.exec_ds()
+        else:
+            pass
 
     def exec_ds(self):
 
@@ -465,6 +498,9 @@ class XmlW(QMainWindow):
 
         self.disconnect(self, SIGNAL("prog1"), self.upd)
         self.connect(self, SIGNAL("prog1"), self.upd)
+
+        self.disconnect(self, SIGNAL("logcns_ds"), self.logconsole)
+        self.connect(self, SIGNAL("logcns_ds"), self.logconsole)
 
         self.threadPool[len(self.threadPool) - 1].start()
 
@@ -481,6 +517,9 @@ class XmlW(QMainWindow):
         self.disconnect(self, SIGNAL("end"), self.lst)
         self.connect(self, SIGNAL("end"), self.lst)
 
+        self.disconnect(self, SIGNAL("logcns_f"), self.logconsole)
+        self.connect(self, SIGNAL("logcns_f"), self.logconsole)
+
         self.threadPool[len(self.threadPool) - 1].start()
 
     def exec_class(self):
@@ -496,6 +535,9 @@ class XmlW(QMainWindow):
 
         self.disconnect(self, SIGNAL("log"), self.log)
         self.connect(self, SIGNAL("log"), self.log)
+
+        self.disconnect(self, SIGNAL("logcns_c"), self.logconsole)
+        self.connect(self, SIGNAL("logcns_c"), self.logconsole)
 
         self.threadPool[len(self.threadPool) - 1].start()
 
@@ -605,7 +647,7 @@ class ClassifW(QMainWindow):
                 self.checkmt3.setChecked(False)
 
                 for i in range(0, len(datasets[SelectedItem.row()].estratif)):
-                    print str(datasets[SelectedItem.row()].estratif[i].id)
+                    # print str(datasets[SelectedItem.row()].estratif[i].id)
                     if str(datasets[SelectedItem.row()].estratif[i].id) == '0':
                         self.checkmt1.setEnabled(True)
                     if str(datasets[SelectedItem.row()].estratif[i].id) == '1':
@@ -676,22 +718,32 @@ class ClassifW(QMainWindow):
         else:
             self.txt.append(text)
 
+    def log(self, text):
+        logger = wdir + '/dump.log'
+        fp = io.open(logger, 'a', encoding='utf-8')
+        text = unicode(text, 'utf-8')
+        fp.write(text)
+        fp.close()
+
     def getXml(self):
         # Para cada metodo de clasificacion elegido, tras haberlo config -> ejecutar dicha clasificacion
         global classif, root
         root = etree.Element("experimento")
 
         for i in range(0, len(datasets)):
-            print 'len methds: ' + str(len(datasets[i].estratif[0].methods))
-            print datasets[i].estratif[0].methods
             p = len(datasets[i].estratif)
             if any(datasets[i].estratif[0 % p].methods) or any(datasets[i].estratif[1 % p].methods) or \
                     any(datasets[i].estratif[2 % p].methods):
-                print 'estaria ok'
+                pass
             else:
-                QMessageBox.about(self, "Aviso", u"Error al guardar el experimento. Añada al menos un "
-                                                 u"método de clasificación para el dataset")
-                return 'error'
+                reply = QMessageBox.question(self, "Aviso", u"Debería añadir al menos un "
+                                             u"método de clasificación para cada dataset. ¿Desea continuar "
+                                             u"de todos modos?", QMessageBox.Yes |
+                                             QMessageBox.No, QMessageBox.Yes)
+                if reply == QMessageBox.Yes:
+                    pass
+                else:
+                    return 'error'
         if len(datasets) < 1:
             self.txt.setText(u"Error. No se han añadido datasets")
         else:
@@ -708,36 +760,27 @@ class ClassifW(QMainWindow):
                     self.child2 = etree.SubElement(self.child1, "estratificado")
 
                     if str(datasets[i].estratif[j].id) == '0':
-                        print 'Iterative'
-                        print 'len: ' + str(len(datasets[i].estratif[j].methods))
+
                         self.child2.set("m1", 'Iterative')
                         for k in range(0, len(datasets[i].estratif[j].methods)):
-                            print 'k: ' + str(k)
+
                             self.child3 = etree.SubElement(self.child2, "metodo")
-                            print 'entro metodo - iterat'
                             self.child3.set("cbase", str(datasets[i].estratif[j].methods[k].cbase))
                             self.child3.set("method", str(datasets[i].estratif[j].methods[k].method))
                             self.child3.set("args", str(datasets[i].estratif[j].methods[k].args))
 
                     if str(datasets[i].estratif[j].id) == '1':
                         self.child2.set("m2", 'Random')
-                        print 'Random'
-                        print 'len: ' + str(len(datasets[i].estratif[j].methods))
                         for k in range(0, len(datasets[i].estratif[j].methods)):
-                            print 'k: ' + str(k)
                             self.child3 = etree.SubElement(self.child2, "metodo")
-                            print 'entro metodo- random'
                             self.child3.set("cbase", str(datasets[i].estratif[j].methods[k].cbase))
                             self.child3.set("method", str(datasets[i].estratif[j].methods[k].method))
                             self.child3.set("args", str(datasets[i].estratif[j].methods[k].args))
 
                     if str(datasets[i].estratif[j].id) == '2':
                         self.child2.set("m3", 'Labelset')
-                        print "labelset"
                         for k in range(0, len(datasets[i].estratif[j].methods)):
-                            print 'len: ' + str(k)
                             self.child3 = etree.SubElement(self.child2, "metodo")
-                            print 'entro metodo-lbset'
                             self.child3.set("cbase", str(datasets[i].estratif[j].methods[k].cbase))
                             self.child3.set("method", str(datasets[i].estratif[j].methods[k].method))
                             self.child3.set("args", str(datasets[i].estratif[j].methods[k].args))
@@ -756,8 +799,8 @@ class ClassifW(QMainWindow):
                 f.write(etree.tostring(my_tree))
                 self.txt.setText("Guardado fichero XML, ruta: " + str(dlg))
                 xmlname = str(dlg)
-                print xmlname + '\n'
-                print etree.tostring(root, pretty_print=True)
+                self.log("Guardado xml: " +str(xmlname) + '\n')
+                # print etree.tostring(root, pretty_print=True)
 
                 reply = QMessageBox.question(self, u'Información',
                                              u"Fichero guardado, ¿desea pasar a ejecutar el experimento?",
@@ -769,7 +812,7 @@ class ClassifW(QMainWindow):
                     pass
 
         else:
-            print "Cancelled"
+            return 'error'
 
     # Definir señal para progressbar -> podemos definir señales propias solo con nombre, no llamada
     #   ejmplo: en vez de add(int), poner 'progress'
@@ -865,7 +908,6 @@ class DatasetW(QMainWindow):
                                  "calcular las medidas del dataset")
 
     def closeEvent(self, evnt):
-        print 'saliendo...'
         global file, dsW
         file = ''
         while self.grid1.count():
@@ -920,7 +962,6 @@ class DatasetW(QMainWindow):
 
     def deletedset(self):
         global datasets
-        print len(datasets)
         for SelectedItem in self.list.selectedItems():
             item = self.list.takeItem(self.list.row(SelectedItem))
             datasets.pop(self.list.row(SelectedItem))
@@ -930,8 +971,6 @@ class DatasetW(QMainWindow):
             self.c2.setChecked(False)
             self.c3.setChecked(False)
             self.c4.setChecked(False)
-
-        print len(datasets)
 
     def partialsave(self):
         global datasets, file
@@ -957,9 +996,7 @@ class DatasetW(QMainWindow):
                 ds.add_op3(self.c3.isChecked())
                 ds.add_op4(self.c4.isChecked())
                 datasets.append(ds)
-                # print datasets[0].ops
-                print 'dset: ' + datasets[0].name
-                print 'len: ' + str(len(datasets))
+
                 file = ''
                 self.le.setText('')
                 self.contents.append(u">Añadido correctamente")
@@ -1004,10 +1041,9 @@ class DatasetW(QMainWindow):
             # Move to xmlWindow
             startxml = True
         else:
-            print "Cancelled"
             b1 = True
 
-        print etree.tostring(my_tree, pretty_print=True)
+        #print etree.tostring(my_tree, pretty_print=True)
 
 
 class FoldsW(QMainWindow):
@@ -1025,6 +1061,7 @@ class FoldsW(QMainWindow):
         self.lst.setFixedSize(700, 100)
 
         self.btn2 = QPushButton("Reiniciar")
+        self.btn1 = QPushButton(u"Añadir a todos")
         self.btn3 = QPushButton(u"Añadir")
         self.btn4 = QPushButton("Guardar y ejecutar")
         self.btn5 = QPushButton("Siguiente")
@@ -1058,6 +1095,7 @@ class FoldsW(QMainWindow):
         self.grid2.addWidget(self.checkmt2, 4, 0, Qt.AlignCenter)
         self.grid2.addWidget(self.checkmt3, 5, 0, Qt.AlignCenter)
 
+        self.grid2.addWidget(self.btn1, 2, 1, 1, 18)
         self.grid2.addWidget(self.btn3, 3, 1, 1, 18)
         self.grid2.addWidget(self.btn4, 4, 1, 1, 18)
         self.grid2.addWidget(self.btn5, 5, 1, 1, 18)
@@ -1072,8 +1110,6 @@ class FoldsW(QMainWindow):
         centerp = QApplication.desktop().screenGeometry().center()
         framegm.moveCenter(centerp)
         self.move(framegm.topLeft())
-
-        print datasets
 
         self.lst.clicked.connect(self.getOperats)
 
@@ -1095,8 +1131,8 @@ class FoldsW(QMainWindow):
 
         for SelectedItem in itms:
             if len(datasets[SelectedItem.row()].estratif) > 0:
-                self.nlabels.setText(str(datasets[SelectedItem.row()].estratif[SelectedItem.row()].nfolds))
                 for i in range(0, len(datasets[SelectedItem.row()].estratif)):
+                    self.nlabels.setText(str(datasets[SelectedItem.row()].estratif[i].nfolds))
                     # print str(datasets[SelectedItem.row()].estratif[SelectedItem.row()].id)
                     if str(datasets[SelectedItem.row()].estratif[i].id) == '0':
                         x1 = True
@@ -1116,8 +1152,13 @@ class FoldsW(QMainWindow):
                 self.checkmt3.setChecked(False)
                 self.nlabels.setText('0')
 
-    def partsave(self):  # Pulsar boton Añadir
+    def partsave(self, mode):  # Pulsar boton Añadir (mode -> añadir (1)/ añadir todos (2)
+        if mode == 2:
+            self.lst.setSelectionMode(QAbstractItemView.MultiSelection)
+            self.lst.selectAll()
+
         itms = self.lst.selectedIndexes()
+
         c1 = self.checkmt1.isChecked()
         c2 = self.checkmt2.isChecked()
         c3 = self.checkmt3.isChecked()
@@ -1129,11 +1170,14 @@ class FoldsW(QMainWindow):
         if len(itms) >= 1:
             for d in itms:
                 for l in reversed(range(0, len(datasets[d.row()].estratif))):
-                    print l
-                    print datasets[d.row()].estratif[l]
+
                     datasets[d.row()].del_estratif(l)
-                    # Esto deberia resetear los esrtatifs si volvemos a añadir
+                    # Esto reseteará los estratifs si volvemos a añadir sobre uno ya establecido
             for it in itms:
+                c1 = self.checkmt1.isChecked()
+                c2 = self.checkmt2.isChecked()
+                c3 = self.checkmt3.isChecked()
+
                 for i in range(0, 3):
                     if c1:
                         f = stratif(0)  # id= 0 iterative
@@ -1142,6 +1186,7 @@ class FoldsW(QMainWindow):
                             self.flabel3.show()
                         else:
                             f.add_folds(int(self.nlabels.text()))
+                            nfolds = int(self.nlabels.text())
 
                             self.flabel3.setText(u"Configuración guardada")
                             self.flabel3.show()
@@ -1171,6 +1216,7 @@ class FoldsW(QMainWindow):
                             self.flabel3.show()
                         else:
                             f.add_folds(int(self.nlabels.text()))
+                            nfolds = int(self.nlabels.text())
 
                             self.flabel3.setText(u"Configuración guardada")
                             self.flabel3.show()
@@ -1178,11 +1224,14 @@ class FoldsW(QMainWindow):
                             datasets[it.row()].set_estratif(f)
                             c3 = False
 
-                print 'len: ' + str(len(datasets[it.row()].estratif))
         else:
-            print 'aviso'
+
             self.flabel3.setText(u"Aviso. No se ha seleccionado ningún dataset")
             self.flabel3.show()
+        #c1 = False
+        #c2 = False
+        #c3 = False
+        self.lst.setSelectionMode(QAbstractItemView.SingleSelection)
 
     def folds(self):
 
@@ -1197,7 +1246,7 @@ class FoldsW(QMainWindow):
         for i in range(0, len(datasets)):
             if not len(datasets[i].estratif) > 0:
                 QMessageBox.about(self, "Aviso", u"Aviso: No se han añadido estratificados "
-                                                        u"a uno o varios datasets")
+                                                 u"a uno o varios datasets")
                 return
         if self.nlabels.text() == '0':
             self.flabel3.setText("Aviso. No se pueden ejecutar particiones con 0 folds...")
@@ -1211,9 +1260,9 @@ class FoldsW(QMainWindow):
                     self.child1.set("op2", str(datasets[i].op2))
                     self.child1.set("op3", str(datasets[i].op3))
                     self.child1.set("op4", str(datasets[i].op4))
-                    self.child1.set("nfolds", str(datasets[i].estratif[i].nfolds))
-                    print len(datasets[i].estratif)
+
                     for j in range(0, len(datasets[i].estratif)):
+                        self.child1.set("nfolds", str(datasets[i].estratif[j].nfolds))
                         self.child2 = etree.SubElement(self.child1, "estratificado")
 
                         if str(datasets[i].estratif[j].id) == '0':
@@ -1239,20 +1288,22 @@ class FoldsW(QMainWindow):
                 return
 
             for i in range(0, len(datasets)):
-                if str(datasets[i].estratif[i].nfolds) == '0':
-                    self.flabel3.setText("Aviso (error 0 folds), no se ha podido guardar el fichero XML")
-                    self.flabel3.show()
-                    return
+                for j in range(0, len(datasets[i].estratif)):
+                    if str(datasets[i].estratif[j].nfolds) == '0':
+                        self.flabel3.setText("Aviso (error 0 folds), no se ha podido guardar el fichero XML")
+                        self.flabel3.show()
+                        return
 
             f = open(dlg, 'wb')
             f.write(etree.tostring(my_tree))
             self.flabel3.setText("Guardado fichero XML, ruta: " + str(dlg))
             self.flabel3.show()
             xmlname = dlg
-            print etree.tostring(my_tree, pretty_print=True)
+            #print etree.tostring(my_tree, pretty_print=True)
             startxml = True
         else:
-            print "Cancelled"
+            pass
+            #print "Cancelled"
 
 
 # This is the main Window of the aplication
@@ -1356,7 +1407,6 @@ class MainApplication(QMainWindow):
             return
 
         for i in range(0, len(datasets)):
-            print datasets[i].op1
             if not datasets[i].op1 and not datasets[i].op2 and not datasets[i].op3 \
                     and not datasets[i].op4:
                 warn = 1
@@ -1380,7 +1430,8 @@ class MainApplication(QMainWindow):
             self.btn2.setEnabled(True)
 
             self.FoldUI.btn2.clicked.connect(self.restart)
-            self.FoldUI.btn3.clicked.connect(self.FoldUI.partsave)
+            self.FoldUI.btn1.clicked.connect(partial(self.FoldUI.partsave, 2))
+            self.FoldUI.btn3.clicked.connect(partial(self.FoldUI.partsave, 1))
             self.FoldUI.btn4.clicked.connect(self.fold_xml)
             self.FoldUI.btn5.clicked.connect(self.startClassifTab)
 
@@ -1471,13 +1522,11 @@ class MainApplication(QMainWindow):
             xmlUI.show()
 
     def restart(self):
-        global file, text, nfolds, classif, dir, xmlname, datasets, xmlUI, dsW, fW, cW, xW
+        global file, text, nfolds, classif, dir, xmlname, datasets, xmlUI, dsW, fW, cW, xW, p1
 
         if not dir == '' and os.path.isdir(dir + '/tmp/'):  # Control de errores aplicado para que esto sea posible
-            print dir + '/tmp/'
             shutil.rmtree(dir + '/tmp/')
 
-        print 'reiniciando...'
         if dsW:
             # La ventana de Dataset está/ha estado abierta
             self.DataUI.close()
@@ -1488,6 +1537,7 @@ class MainApplication(QMainWindow):
         if xW:
             for i in range(0, len(xmlUI.threadPool)):
                 xmlUI.threadPool[i].stop()
+            xmlUI.btn3.setEnabled(True)
             xmlUI.close()
 
         if cW:
@@ -1497,6 +1547,7 @@ class MainApplication(QMainWindow):
         self.btn2.setEnabled(False)
         self.btn3.setEnabled(False)
         self.btn4.setEnabled(True)
+
         file = ''
         text = str('')
         nfolds = 0
@@ -1510,6 +1561,8 @@ class MainApplication(QMainWindow):
         fW = False
         cW = False
         xW = False
+
+        p1 = False
 
     def closeEvent(self, event):  # Redefinimos el evento de cierre (pedir confirmacion)
 

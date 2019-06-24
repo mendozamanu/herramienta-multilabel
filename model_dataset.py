@@ -243,7 +243,7 @@ def cardinality(self, df):
         insts = np.zeros(labels, dtype=int)
 
         nwdfname = str(df)[:str(df).rfind('.')] + "_measures.report"
-        print '>>>>>>'+nwdfname
+
         self.emit(SIGNAL('textoinf'), "\nMedidas del dataset "+str(dat)+':')
         fp = open(nwdfname, 'w')
         fp.write("Instances: " + str(instances) + '\n')
@@ -345,14 +345,11 @@ def labfrecplot(insts, name, dir):
     for i, j in zip(flbs, y_pos):
         plt.annotate(str(flbs[j]), xy=(j, i + (np.max(flbs) * 0.01)), horizontalalignment='center')
 
-    # plt.show()
-    print name
-    print dat
     plt.savefig(save + dat + '_freclbs.png')
     plt.close()
 
 
-# TODO: mejorar la visualizacion de la grafica que se genera en cardinality..............................................
+# TODO: mejorar la visualizacion de la grafica que se genera en cardinality...........................................
 def label_correlation(y, s):
     """Correlation between labels in a label matrix
     Parameters
@@ -548,8 +545,6 @@ def coov(self, name, dir, plt1, plt2):
             for i, j in zip(labelscorrel, y_pos):
                 plt.annotate(str(labelscorrel[j]), xy=(j, i + (np.max(labelscorrel) * 0.01)), horizontalalignment='center')
 
-            # plt.show()
-            print save
             if os.path.exists(save):
                 plt.savefig(save + dat + '_corrlabls.png')
             plt.close()

@@ -1,4 +1,4 @@
-# tfg
+# Herramienta para el estudio del problema de desequilibrio en problemas de clasificación multietiqueta
 Desarrollo de la herramienta para el estudio del problema de desequilibrio en problemas de clasificación multietiqueta
 
 Instrucciones de instalación:

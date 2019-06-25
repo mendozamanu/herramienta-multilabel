@@ -31,6 +31,7 @@ classif = []
 dir = './'
 wdir = './'
 xmlname = ''
+tempxml = ''
 startxml = False
 datasets = []  # Contendra elems de la clase dset, estratif y metodo
 xmlUI = None
@@ -264,12 +265,17 @@ class PlotWindow(QMainWindow):
 
 class XmlW(QMainWindow):
     def loadXmlW(self):
-
+        global xmlname
+        
         self.setCentralWidget(QWidget(self))
 
         self.threadPool = []
 
+        print tempxml
         self.load = QLineEdit()  # Para cargar el xml a ejecutar
+        if not tempxml == '':
+            self.load.setText(tempxml)
+            xmlname = tempxml
 
         self.load.setReadOnly(True)
         self.btn1 = QPushButton("Cargar fichero XML")
@@ -458,10 +464,11 @@ class XmlW(QMainWindow):
 
         if self.plots:
             self.plots.close()
-        global xmlUI, xW, xmlname, dir, p1
+        global xmlUI, xW, tempxml, xmlname, dir, p1
         xmlUI = None
         xW = False
         p1 = False # No vuelve a cargar la ventana si cerramos con (X) la ventana - p1 a true
+        tempxml = xmlname
         xmlname = ''
         dir = './'
         self.btn3.setEnabled(True)
@@ -615,7 +622,11 @@ class ClassifW(QMainWindow):
 
         self.btn3.setEnabled(False)
 
-        self.lst.clicked.connect(self.getOperats)
+        self.lst.selectionModel().selectionChanged.connect(self.getOperats)
+
+        idx = proxy.index(0, 0)
+        self.lst.setCurrentIndex(idx)
+
         self.checkmt1.clicked.connect(self.enable)
         self.checkmt2.clicked.connect(self.enable)
         self.checkmt3.clicked.connect(self.enable)
@@ -647,6 +658,8 @@ class ClassifW(QMainWindow):
                 self.checkmt1.setChecked(False)
                 self.checkmt2.setChecked(False)
                 self.checkmt3.setChecked(False)
+
+                self.enable()
 
                 for i in range(0, len(datasets[SelectedItem.row()].estratif)):
                     # print str(datasets[SelectedItem.row()].estratif[i].id)
@@ -744,21 +757,31 @@ class ClassifW(QMainWindow):
 
         for i in range(0, len(datasets)):
             p = len(datasets[i].estratif)
-            if any(datasets[i].estratif[0 % p].methods) or any(datasets[i].estratif[1 % p].methods) or \
-                    any(datasets[i].estratif[2 % p].methods):
-                pass
+            if not p == 0:
+                if any(datasets[i].estratif[0 % p].methods) or any(datasets[i].estratif[1 % p].methods) or \
+                        any(datasets[i].estratif[2 % p].methods):
+                    pass
+                else:
+                    reply = QMessageBox.question(self, "Aviso", u"Debería añadir al menos un "
+                                                 u"método de clasificación para cada dataset. ¿Desea continuar "
+                                                 u"de todos modos?", QMessageBox.Yes |
+                                                 QMessageBox.No, QMessageBox.Yes)
+                    if reply == QMessageBox.Yes:
+                        pass
+                    else:
+                        self.txt.setText("Guardado cancelado")
+                        return 'error'
             else:
-                reply = QMessageBox.question(self, "Aviso", u"Debería añadir al menos un "
-                                             u"método de clasificación para cada dataset. ¿Desea continuar "
-                                             u"de todos modos?", QMessageBox.Yes |
-                                             QMessageBox.No, QMessageBox.Yes)
+                reply = QMessageBox.question(self, "Aviso", u"Hay algún dataset para el cual no "
+                                             u"se pueden añadir métodos de clasificación. ¿Desea continuar "
+                                             u"de todos modos?", QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
                 if reply == QMessageBox.Yes:
                     pass
                 else:
                     self.txt.setText("Guardado cancelado")
                     return 'error'
         if len(datasets) < 1:
-            self.txt.setText(u"Error. No se han añadido datasets")
+            QMessageBox.about(self, "Error", u"Error. No se han añadido datasets")
         else:
             for i in range(0, len(datasets)):
                 self.child1 = etree.SubElement(root, "dataset")
@@ -826,6 +849,7 @@ class ClassifW(QMainWindow):
                     return 'error'
 
         else:
+            self.txt.setText("Guardado cancelado")
             return 'error'
 
     # Definir señal para progressbar -> podemos definir señales propias solo con nombre, no llamada
@@ -851,6 +875,9 @@ class DatasetW(QMainWindow):
         self.btn3 = QPushButton("Guardar y ejecutar")
         self.btn4 = QPushButton("Borrar")
         self.btn5 = QPushButton(u"Guardar operaciones")
+        self.btn5.setSizePolicy(
+            QSizePolicy.Preferred,
+            QSizePolicy.Expanding)
 
         self.flabel = QLabel("Operaciones: ")
         self.c1 = QCheckBox("Medidas")
@@ -865,17 +892,17 @@ class DatasetW(QMainWindow):
         self.grid1.addWidget(self.label, 0, 0)
         self.grid1.addWidget(self.list, 1, 0)
         self.grid1.addWidget(self.btn4, 1, 1, 1, 14)
-        self.grid1.addWidget(self.btn5, 2, 0, 1, 14)
+        self.grid1.addWidget(self.btn5, 8, 0)
 
         self.grid1.addWidget(self.flabel, 3, 0, Qt.AlignLeft)
         self.grid1.addWidget(self.c1, 4, 0, Qt.AlignLeft)
         self.grid1.addWidget(self.c2, 5, 0, Qt.AlignLeft)
         self.grid1.addWidget(self.c3, 6, 0, Qt.AlignLeft)
         self.grid1.addWidget(self.c4, 7, 0, Qt.AlignLeft)
-        self.grid1.addWidget(self.contents, 8, 0)
+        self.grid1.addWidget(self.contents, 9, 0)
         self.grid1.addWidget(self.btn3, 5, 1, 1, 14)
         self.grid1.addWidget(self.btn2, 6, 1, 1, 14)
-        self.grid1.addWidget(self.btn6, 8, 1, 1, 14)
+        self.grid1.addWidget(self.btn6, 9, 1, 1, 14)
 
         self.centralWidget().setLayout(self.grid1)
 
@@ -886,7 +913,7 @@ class DatasetW(QMainWindow):
         # self.setCentralWidget(widget)
         self.contents.setText("Datasets seleccionados: ")
 
-        self.list.itemSelectionChanged.connect(self.getOperats)
+        self.list.itemClicked.connect(self.getOperats)
 
         self.c4.stateChanged.connect(self.restr)
 
@@ -930,8 +957,9 @@ class DatasetW(QMainWindow):
         dsW = False
 
     def getOperats(self):
-        if len(datasets)>=1:
+        if len(datasets) >= 1:
             for SelectedItem in self.list.selectedItems():
+                print self.list.row(SelectedItem)
                 self.c1.setChecked(datasets[self.list.row(SelectedItem)].op1)
                 self.c2.setChecked(datasets[self.list.row(SelectedItem)].op2)
                 self.c3.setChecked(datasets[self.list.row(SelectedItem)].op3)
@@ -992,10 +1020,12 @@ class DatasetW(QMainWindow):
     def deletedset(self):
         global datasets
         for SelectedItem in self.list.selectedItems():
-            item = self.list.takeItem(self.list.row(SelectedItem))
+            print 'len bf: ' + str(len(datasets))
+            #print self.list.row(SelectedItem)
             datasets.pop(self.list.row(SelectedItem))
+            item = self.list.takeItem(self.list.row(SelectedItem))
+            print 'len aft: ' + str(len(datasets))
 
-        if self.list.count() == 0:
             self.c1.setChecked(False)
             self.c2.setChecked(False)
             self.c3.setChecked(False)
@@ -1024,7 +1054,8 @@ class DatasetW(QMainWindow):
         if dlg:
             if not str(dlg).endswith('.xml'):
                 dlg = os.path.splitext(str(dlg))[0] + '.xml'
-
+            if os.path.isfile(dlg):
+                os.remove(dlg)
             with open(dlg, 'wb') as f:
                 f.write(etree.tostring(my_tree))
                 self.contents.append("Guardado fichero XML, ruta: " + str(dlg) + '\n')
@@ -1049,7 +1080,7 @@ class FoldsW(QMainWindow):
 
         self.lst.setModel(proxy)
 
-        self.lst.setFixedSize(700, 100)
+        self.lst.setFixedSize(650, 100)
 
         self.btn2 = QPushButton("Reiniciar")
         self.btn1 = QPushButton(u"Añadir a todos")
@@ -1063,7 +1094,7 @@ class FoldsW(QMainWindow):
 
         self.onlyInt = QIntValidator(2, 100)
         self.nlabels.setValidator(self.onlyInt)
-        self.nlabels.setText(str(nfolds))
+        self.nlabels.setText('10')
 
         self.flabel3 = QLabel()
 
@@ -1104,6 +1135,11 @@ class FoldsW(QMainWindow):
 
         self.lst.clicked.connect(self.getOperats)
 
+        self.editable = 0
+
+        idx = proxy.index(0, 0)
+        self.lst.setCurrentIndex(idx)
+
     def __init__(self, parent=None):
         super(FoldsW, self).__init__(parent)
 
@@ -1126,22 +1162,22 @@ class FoldsW(QMainWindow):
                     self.nlabels.setText(str(datasets[SelectedItem.row()].estratif[i].nfolds))
                     # print str(datasets[SelectedItem.row()].estratif[SelectedItem.row()].id)
                     if str(datasets[SelectedItem.row()].estratif[i].id) == '0':
-                        x1 = True
+                        self.checkmt1.setChecked(True)
+                        self.editable = 1
 
-                        self.checkmt1.setChecked(x1)
                     if str(datasets[SelectedItem.row()].estratif[i].id) == '1':
-                        x2 = True
+                        self.checkmt2.setChecked(True)
+                        self.editable = 1
 
-                        self.checkmt2.setChecked(x2)
                     if str(datasets[SelectedItem.row()].estratif[i].id) == '2':
-                        x3 = True
+                        self.checkmt3.setChecked(True)
+                        self.editable = 1
 
-                        self.checkmt3.setChecked(x3)
             else:
                 self.checkmt1.setChecked(False)
                 self.checkmt2.setChecked(False)
                 self.checkmt3.setChecked(False)
-                self.nlabels.setText('0')
+                self.nlabels.setText('10')
 
     def partsave(self, mode):  # Pulsar boton Añadir (mode -> añadir (1)/ añadir todos (2)
         if mode == 2:
@@ -1150,13 +1186,19 @@ class FoldsW(QMainWindow):
 
         itms = self.lst.selectedIndexes()
 
+        if len(itms) < 1:
+            QMessageBox.about(self, "Aviso", u"Aviso. No se ha seleccionado ningún dataset.")
         c1 = self.checkmt1.isChecked()
         c2 = self.checkmt2.isChecked()
         c3 = self.checkmt3.isChecked()
         global nfolds
         if not c1 and not c2 and not c3:
-            self.flabel3.setText(u"Aviso. No se ha seleccionado ningún método...")
-            return
+            if self.editable == 1:
+                pass  # Permitimos guardar sin ningun metodo de estratif
+            else:
+                QMessageBox.about(self, "Aviso", u"Aviso. No se ha seleccionado ningún método de estratificación.")
+                self.lst.setSelectionMode(QAbstractItemView.SingleSelection)
+                return
 
         if len(itms) >= 1:
             for d in itms:
@@ -1166,6 +1208,8 @@ class FoldsW(QMainWindow):
                     # Esto reseteará los estratifs si volvemos a añadir sobre uno ya establecido
             if int(self.nlabels.text()) < 2:
                 QMessageBox.about(self, "Aviso", u"No se pueden ejecutar particiones con 0 ó 1 folds.")
+                self.lst.setSelectionMode(QAbstractItemView.SingleSelection)
+                return
 
             for it in itms:
                 c1 = self.checkmt1.isChecked()
@@ -1219,12 +1263,9 @@ class FoldsW(QMainWindow):
                             c3 = False
 
         else:
-
-            self.flabel3.setText(u"Aviso. No se ha seleccionado ningún dataset")
+            self.flabel3.setText(u"Aviso. No se ha seleccionado ningún dataset.")
             self.flabel3.show()
-        #c1 = False
-        #c2 = False
-        #c3 = False
+
         self.lst.setSelectionMode(QAbstractItemView.SingleSelection)
 
     def folds(self):
@@ -1239,9 +1280,12 @@ class FoldsW(QMainWindow):
 
         for i in range(0, len(datasets)):
             if not len(datasets[i].estratif) > 0:
-                QMessageBox.about(self, "Aviso", u"Aviso: No se han añadido estratificados "
-                                                 u"a uno o varios datasets")
-                return
+                reply = QMessageBox.question(self, "Aviso", u"Aviso: No se han añadido estratificados "
+                                             u"a uno o varios datasets, ¿desea continuar?",
+                                             QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+
+                if reply == QMessageBox.No:
+                    return
         if self.nlabels.text() == '0':
             self.flabel3.setText("Aviso. No se pueden ejecutar particiones con 0 folds...")
             return
@@ -1266,8 +1310,8 @@ class FoldsW(QMainWindow):
                         if str(datasets[i].estratif[j].id) == '2':
                             self.child2.set("m3", 'Labelset')
                 else:
-                    self.flabel3.setText(u"Error. No se ha añadido ningún estratificado")
-                    return
+                    self.flabel3.setText(u"Aviso. No se ha añadido ningún estratificado")
+                    #return
 
             my_tree = etree.ElementTree(root)
 
@@ -1404,6 +1448,7 @@ class MainApplication(QMainWindow):
             if not datasets[i].op1 and not datasets[i].op2 and not datasets[i].op3 \
                     and not datasets[i].op4:
                 warn = 1
+
         if warn == 1:
             reply = QMessageBox.question(self.DataUI, 'Aviso',
                                          u"No se han añadido medidas a uno o varios datasets,"
@@ -1449,9 +1494,12 @@ class MainApplication(QMainWindow):
 
         for i in range(0, len(datasets)):
             if not len(datasets[i].estratif) > 0:
-                QMessageBox.about(self.FoldUI, "Aviso", u"Aviso: No se han añadido estratificados "
-                                                        u"a uno o varios datasets")
-                return
+                reply = QMessageBox.question(self.FoldUI, "Aviso", u"Aviso: No se han añadido estratificados "
+                                             u"a uno o varios datasets, ¿desea continuar?",
+                                             QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+
+                if reply == QMessageBox.No:
+                    return
 
         if not cW:
             self.ClassifUI = ClassifW(self)
@@ -1508,7 +1556,8 @@ class MainApplication(QMainWindow):
             self.btn2.setEnabled(False)
             self.btn3.setEnabled(False)
             self.btn4.setEnabled(True)
-            xmlUI.load.setText(xmlname)
+            if not xmlname == '':
+                xmlUI.load.setText(xmlname)
             xmlUI.btn1.clicked.connect(xmlUI.getxmlfile)
             xmlUI.btn2.clicked.connect(xmlUI.getWorkingDir)
             xmlUI.btn3.clicked.connect(xmlUI.execute)
@@ -1573,6 +1622,12 @@ class MainApplication(QMainWindow):
 
 def main():
     app = QApplication(sys.argv)
+
+    translator = QTranslator(app)
+    locale = QLocale.system().name()
+    path = QLibraryInfo.location(QLibraryInfo.TranslationsPath)
+    translator.load('qt_%s' % locale, path)
+    app.installTranslator(translator)
 
     ex = MainApplication()
     ex.show()

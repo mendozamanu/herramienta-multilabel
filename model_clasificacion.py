@@ -159,6 +159,9 @@ def make_classif(self, nfolds, fname, cl, parm, stratif, dir):
     fold_cover = []
     fold_rank = []
 
+    if not os.path.exists(str(dir) + '/csv/'):
+        os.makedirs(str(dir) + '/csv/')
+
     if stratif == 'Random':
         outpname = dir + '/csv/'+str(cl).split('(')[0]+'_random.csv'
 

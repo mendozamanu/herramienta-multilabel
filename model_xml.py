@@ -312,7 +312,6 @@ def execute_dset(self, fname, dir):
 
 def execute_folds(self, fname, dir):
 
-    tree = etree.parse(str(fname))
     filef = []
     nfls = []
     m1 = []
@@ -321,6 +320,7 @@ def execute_folds(self, fname, dir):
     factive = 0
 
     if not str(fname) == '':
+        tree = etree.parse(str(fname))
         self.emit(SIGNAL('logcns_f'), "\nEntrando a generar los folds\n")
         if tree.findall('.//estratificado'):
             time.sleep(1)
@@ -469,7 +469,7 @@ def execute_class(self, fname, dir):
                         meths.append(str(name.get('method')))
                         stratif.append(str(estratificado))
                         clasactive = 1
-                        aux+=1
+                        aux += 1
                     if name.get('cbase'):
                         if not name.get('cbase') == '-':
                             self.emit(SIGNAL('infoclassif'), u'>>Clasificador base: ' + str(name.get('cbase')))
@@ -523,11 +523,12 @@ def execute_class(self, fname, dir):
             self.emit(SIGNAL('infoclassif'), u'\nTerminado\n')
 
     meth_count.append(aux)  # Le pasamos el contador del ultimo dset ya q no vuelve a entrar para ponerlo
-    aux=0
+    aux = 0
     self.emit(SIGNAL('log'))
 
     if clasactive == 1:
         self.emit(SIGNAL('logcns_c'), "Obteniendo parámetros para ejecutar la clasificación..\n")
+
         for i in range(0, len(fclass)):
             call = []
             parms = []

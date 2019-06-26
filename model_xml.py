@@ -173,15 +173,18 @@ def execute_dset(self, fname, dir):
                 if not op1[i] == 'False':
 
                     active = 1
-                    df = md.convert(self, fileds[i], dir)
-                    self.emit(SIGNAL('prog1'), prog/2)
+                    try:
+                        df = md.convert(self, fileds[i], dir)
+                        self.emit(SIGNAL('prog1'), prog/2)
 
-                    report, insts = md.cardinality(self, df)
-                    self.emit(SIGNAL('prog1'), prog)
+                        report, insts = md.cardinality(self, df)
+                        self.emit(SIGNAL('prog1'), prog)
 
-                    parts.append(Spacer(1, 0.2 * inch))
-                    p = Paragraph(u"Medidas: ", styles["Heading2"])
-                    parts.append(p)
+                        parts.append(Spacer(1, 0.2 * inch))
+                        p = Paragraph(u"Medidas: ", styles["Heading2"])
+                        parts.append(p)
+                    except:
+                        self.emit(SIGNAL('logcns_ds'), 'Error en la generación de las medidas del dataset\n')
 
                     if os.path.isfile(report):
                         try:
@@ -573,14 +576,14 @@ def execute_class(self, fname, dir):
                     if csbase[j] == 'kNN':
                         self.emit(SIGNAL('logcns_c'), "kNN parms: " + str(n_neighbors[j])+'\n')
 
-                        call.append(BinaryRelevance(classifier=KNeighborsClassifier(n_neighbors=int(n_neighbors[j])),
+                        call.append(LabelPowerset(classifier=KNeighborsClassifier(n_neighbors=int(n_neighbors[j])),
                                                     require_dense=[False, True]))
                         parms.append('n_neighbors= ' + str(n_neighbors[j]))
 
                     if csbase[j] == 'Random Forests':
                         self.emit(SIGNAL('logcns_c'), "Random Forest parms: " + str(n_estimators[j])+'\n')
 
-                        call.append(BinaryRelevance(classifier=RandomForestClassifier(n_estimators=int(n_estimators[j]),
+                        call.append(LabelPowerset(classifier=RandomForestClassifier(n_estimators=int(n_estimators[j]),
                                                                                       criterion=str(criterion_rf[j])),
                                                     require_dense=[False, True]))
                         parms.append('n_estimators= ' + str(n_estimators[j]) + ', criterion= ' + str(criterion_rf[j]))
@@ -593,7 +596,7 @@ def execute_class(self, fname, dir):
                         except ValueError:
                             self.emit(SIGNAL('logcns_c'), "No se puede convertir a float - (valor: scale)")
 
-                        call.append(BinaryRelevance(classifier=SVC(C=float(C[j]), kernel=str(kernel[j]),
+                        call.append(LabelPowerset(classifier=SVC(C=float(C[j]), kernel=str(kernel[j]),
                                                                    gamma=gamma[j], probability=True),
                                                     require_dense=[False, True]))
                         parms.append('C= ' + str(C[j]) + ', kernel= ' + str(kernel[j]) + ', gamma= ' + str(gamma[j]))
@@ -601,7 +604,7 @@ def execute_class(self, fname, dir):
                     if csbase[j] == 'Decision Tree':
                         self.emit(SIGNAL('logcns_c'), "Decision tree parms: " + str(criterion_dt[j])+'\n')
 
-                        call.append(BinaryRelevance(classifier=DecisionTreeClassifier(criterion=str(criterion_dt[j])),
+                        call.append(LabelPowerset(classifier=DecisionTreeClassifier(criterion=str(criterion_dt[j])),
                                                     require_dense=[False, True]))
                         parms.append('criterion = ' + str(criterion_dt[j]))
 
@@ -610,14 +613,14 @@ def execute_class(self, fname, dir):
                     if csbase[j] == 'kNN':
                         self.emit(SIGNAL('logcns_c'), "kNN parms: " + str(n_neighbors[j])+'\n')
 
-                        call.append(BinaryRelevance(classifier=KNeighborsClassifier(n_neighbors=int(n_neighbors[j])),
+                        call.append(ClassifierChain(classifier=KNeighborsClassifier(n_neighbors=int(n_neighbors[j])),
                                                     require_dense=[False, True]))
                         parms.append('n_neighbors= ' + str(n_neighbors[j]))
 
                     if csbase[j] == 'Random Forests':
                         self.emit(SIGNAL('logcns_c'), "Random Forest parms: " + str(n_estimators[j])+'\n')
 
-                        call.append(BinaryRelevance(classifier=RandomForestClassifier(n_estimators=int(n_estimators[j]),
+                        call.append(ClassifierChain(classifier=RandomForestClassifier(n_estimators=int(n_estimators[j]),
                                                                                       criterion=str(criterion_rf[j])),
                                                     require_dense=[False, True]))
                         parms.append('n_estimators= ' + str(n_estimators[j]) + ', criterion= ' + str(criterion_rf[j]))
@@ -630,7 +633,7 @@ def execute_class(self, fname, dir):
                         except ValueError:
                             self.emit(SIGNAL('logcns_c'), "No se puede convertir a float - (valor: scale)")
 
-                        call.append(BinaryRelevance(classifier=SVC(C=float(C[j]), kernel=str(kernel[j]),
+                        call.append(ClassifierChain(classifier=SVC(C=float(C[j]), kernel=str(kernel[j]),
                                                                    gamma=gamma[j], probability=True),
                                                     require_dense=[False, True]))
                         parms.append('C= ' + str(C[j]) + ', kernel= ' + str(kernel[j]) + ', gamma= ' + str(gamma[j]))
@@ -638,7 +641,7 @@ def execute_class(self, fname, dir):
                     if csbase[j] == 'Decision Tree':
                         self.emit(SIGNAL('logcns_c'), "Decision tree parms: " + str(criterion_dt[j])+'\n')
 
-                        call.append(BinaryRelevance(classifier=DecisionTreeClassifier(criterion=str(criterion_dt[j])),
+                        call.append(ClassifierChain(classifier=DecisionTreeClassifier(criterion=str(criterion_dt[j])),
                                                     require_dense=[False, True]))
                         parms.append('criterion = ' + str(criterion_dt[j]))
                 if meths[j] == 'MlKNN':

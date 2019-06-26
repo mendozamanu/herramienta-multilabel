@@ -10,15 +10,11 @@ from lxml import etree
 from functools import partial
 import io
 
-# TODO https://stackoverflow.com/questions/3605680/creating-a-simple-xml-file-using-python#3605831 #usamos lxml
 
-# TODO
-#  BUGS:
-#        2. cuando termina la ejecucion salen 2 errors/warnings sobre QObject::startTumer: Qtimer solo se puede usar en
+# KNOWN BUGS:
+#        1. cuando termina la ejecucion salen 2 errors/warnings sobre QObject::startTimer: Qtimer solo se puede usar en
 #        hilos lanzados por QThread.
-#        3. Object::disconnect: Unexpected null parameter en el pc de casa
-#        4. Al cancelar la ejecucion del programa porq se pulse volver a otra ventana o cerrar, que termine
-#        todo correctamente - creo q done
+#        2. O este error: Object::disconnect: Unexpected null parameter
 
 root = etree.Element("experimento")
 file = ''
@@ -33,7 +29,7 @@ wdir = './'
 xmlname = ''
 tempxml = ''
 startxml = False
-datasets = []  # Contendra elems de la clase dset, estratif y metodo
+datasets = []  # Contendrá elementos de la clase dset, estratif y metodo
 xmlUI = None
 
 dsW = False
@@ -684,12 +680,22 @@ class ClassifW(QMainWindow):
                 c.addmethod(str(self.methods.currentText()))
 
                 if not self.methods.currentText() == 'MlKNN':
-                    args = ctrl.getargs(self, str(self.base.currentText()))  # Le psamos los clasif base
-                    c.addcbase(str(self.base.currentText()))
+                    args = ctrl.getargs(self, str(self.base.currentText()))  # Le pasamos los clasificadores base
+                    if not args is None:
+                        c.addcbase(str(self.base.currentText()))
                     # print args
+                    else:
+                        self.txt.setText(u"Clasificación cancelada")
+                        QMessageBox.about(self, "Aviso", u"Operación cancelada")
+                        return
                 else:
                     args = ctrl.getargs(self, str(self.methods.currentText()))  # Le pasamos mlknn
-                    c.addcbase('-')
+                    if not args is None:
+                        c.addcbase('-')
+                    else:
+                        self.txt.setText(u"Clasificación cancelada")
+                        QMessageBox.about(self, "Aviso", u"Operación cancelada")
+                        return
 
                     # print args
 
@@ -751,7 +757,7 @@ class ClassifW(QMainWindow):
         fp.close()
 
     def getXml(self):
-        # Para cada metodo de clasificacion elegido, tras haberlo config -> ejecutar dicha clasificacion
+        # Para cada método de clasificación elegido, tras haberlo configurado -> ejecutar dicha clasificación
         global classif, root
         root = etree.Element("experimento")
 
@@ -851,12 +857,6 @@ class ClassifW(QMainWindow):
         else:
             self.txt.setText("Guardado cancelado")
             return 'error'
-
-    # Definir señal para progressbar -> podemos definir señales propias solo con nombre, no llamada
-    #   ejmplo: en vez de add(int), poner 'progress'
-    # https://stackoverflow.com/questions/8649233/threading-it-is-not-safe-to-use-pixmaps-outside-the-gui-thread#8649257
-    # self.threadPool[len(self.threadPool)-1].start()
-    # ctrl.exec_class(self, classif, nfolds, filename)
 
 
 class DatasetW(QMainWindow):
@@ -1160,7 +1160,7 @@ class FoldsW(QMainWindow):
             if len(datasets[SelectedItem.row()].estratif) > 0:
                 for i in range(0, len(datasets[SelectedItem.row()].estratif)):
                     self.nlabels.setText(str(datasets[SelectedItem.row()].estratif[i].nfolds))
-                    # print str(datasets[SelectedItem.row()].estratif[SelectedItem.row()].id)
+
                     if str(datasets[SelectedItem.row()].estratif[i].id) == '0':
                         self.checkmt1.setChecked(True)
                         self.editable = 1
@@ -1194,7 +1194,7 @@ class FoldsW(QMainWindow):
         global nfolds
         if not c1 and not c2 and not c3:
             if self.editable == 1:
-                pass  # Permitimos guardar sin ningun metodo de estratif
+                pass  # Permitimos guardar sin ningún metodo de estratificación
             else:
                 QMessageBox.about(self, "Aviso", u"Aviso. No se ha seleccionado ningún método de estratificación.")
                 self.lst.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -1274,8 +1274,8 @@ class FoldsW(QMainWindow):
         global xmlname, startxml
         global root
 
-        # Si llegamos a esta ventana, no se ha guardado el experim asi q podemos resetearlo para evitar
-        # elems no deseados
+        # Si llegamos a esta ventana, no se ha guardado el experim así que podemos resetearlo para evitar
+        # elementos no deseados
         root = etree.Element("experimento")
 
         for i in range(0, len(datasets)):
@@ -1337,11 +1337,9 @@ class FoldsW(QMainWindow):
             self.flabel3.setText("Guardado fichero XML, ruta: " + str(dlg))
             self.flabel3.show()
             xmlname = dlg
-            #print etree.tostring(my_tree, pretty_print=True)
             startxml = True
         else:
             pass
-            #print "Cancelled"
 
 
 # This is the main Window of the aplication
@@ -1377,7 +1375,6 @@ class MainApplication(QMainWindow):
 
         self.btn2.setEnabled(False)
         self.btn3.setEnabled(False)
-        # self.btn4.setEnabled(False)
 
         self.btn1.clicked.connect(self.startDatasetTab)
         self.btn2.clicked.connect(self.startFoldsTab)
@@ -1390,11 +1387,9 @@ class MainApplication(QMainWindow):
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowSystemMenuHint & Qt.WindowCloseButtonHint
                             & Qt.WindowMinimizeButtonHint)
 
-        self.setFixedSize(850, 400)  # Tamanio por defecto de ventana
+        self.setFixedSize(850, 400)  # Tamaño por defecto de ventana
 
         framegm = self.frameGeometry()
-        # centerp = QApplication.desktop().screenGeometry().center()
-        # framegm.moveCenter(centerp)
         self.move(framegm.topLeft())
 
         self.setWindowTitle(u"Herramienta para el estudio del problema "
@@ -1420,7 +1415,7 @@ class MainApplication(QMainWindow):
 
             if not self.DataUI.isVisible():
                 self.DataUI.show()
-                # print self.DataUI.isVisible()
+
         if fW:
             self.FoldUI.close()
         if xW:
@@ -1537,7 +1532,7 @@ class MainApplication(QMainWindow):
             xW = True
 
         if xmlname == '' and cW:
-            # Guardar las ops antes d camb d ventana
+            # Guardar las operaciones antes de cambiar de ventana (archivo XML)
             ret = self.ClassifUI.getXml()
             if ret == 'error':
                 return
@@ -1565,7 +1560,7 @@ class MainApplication(QMainWindow):
             xmlUI.show()
 
     def restart(self):
-        global file, text, nfolds, classif, dir, xmlname, datasets, xmlUI, dsW, fW, cW, xW, p1
+        global file, text, nfolds, classif, dir, xmlname, tempxml, datasets, xmlUI, dsW, fW, cW, xW, p1
 
         if not dir == '' and os.path.isdir(dir + '/tmp/'):  # Control de errores aplicado para que esto sea posible
             shutil.rmtree(dir + '/tmp/')
@@ -1597,7 +1592,8 @@ class MainApplication(QMainWindow):
         classif = []
         dir = './'
         xmlname = ''
-        datasets = []  # Contendra elems de la clase dset, estratif y metodo
+        tempxml = ''
+        datasets = []
         xmlUI = None
 
         dsW = False
@@ -1607,7 +1603,7 @@ class MainApplication(QMainWindow):
 
         p1 = False
 
-    def closeEvent(self, event):  # Redefinimos el evento de cierre (pedir confirmacion)
+    def closeEvent(self, event):  # Redefinimos el evento de cierre (pedir confirmación)
 
         reply = QMessageBox.question(self, 'Aviso',
                                      u"¿Está seguro de que desea salir?", QMessageBox.Yes |

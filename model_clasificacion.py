@@ -19,7 +19,7 @@ from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 
 import sklearn.metrics
-from sklearn.metrics import classification_report,confusion_matrix
+from sklearn.metrics import classification_report, confusion_matrix
 
 
 # Parametros para los clasificadores base
@@ -115,6 +115,8 @@ def readDataFromFile(self, fileName):
     return X, y
 
 
+# Modificacion de la implementacion de Scikit-learn para evitar error de división por 0, que ocasionaba
+# mean avg precision nan en muchos folds y datasets.
 def average_precision_score(y_true, y_score, average="macro", pos_label=1,
                             sample_weight=None):
     def _binary_uninterpolated_average_precision(
@@ -131,21 +133,6 @@ def average_precision_score(y_true, y_score, average="macro", pos_label=1,
 
     return sklearn.metrics.base._average_binary_score(average_precision, y_true, y_score,
                                                       average, sample_weight=sample_weight)
-
-
-# TODO : https://nikolak.com/pyqt-threading-tutorial/
-#   usar threading para ejecutar estas llamadas en paralelo, o por lo menos no dejar pillada la UI durante el proceso
-
-
-#  https://stackoverflow.com/questions/2846653/how-to-use-threading-in-python#28463266
-
-#TODO from multiprocessing import Process
-# def f(name):
-#    print 'hello', name
-# if __name__ == '__main__':
-#    p = Process(target=f, args=('bob',))
-#    p.start()
-#    p.join()
 
 
 def make_classif(self, nfolds, fname, cl, parm, stratif, dir):
@@ -301,143 +288,74 @@ def getargs(self, metodo):
 
     if metodo == 'MlKNN':
         # Requiere parametro k
-        k, _ = QInputDialog.getInt(self, u"Parámetro k - MlKNN", u"Introduzca el valor de k para MlKNN: ", 5,
+        k, ok = QInputDialog.getInt(self, u"Parámetro k - MlKNN", u"Introduzca el valor de k para MlKNN: ", 5,
                                    min=1, max=1000)
-        result = str(k)
+        if ok:
+            result = str(k)
+        else:
+            return
 
     else:
         crits = ('gini', 'entropy')
         kern = ('rbf', 'linear', 'poly', 'sigmoid', 'precomputed')
         if metodo == 'kNN':
             # Req n_neighbors
-            n_neighbors, _ = QInputDialog.getInt(self, u"Parámetro n_neighbors - kNN", u"Introduzca el valor "
+            n_neighbors, ok = QInputDialog.getInt(self, u"Parámetro n_neighbors - kNN", u"Introduzca el valor "
                                                                                         u"de n_neighbors para "
                                                                                         u"kNN: ", 5, min=1, max=1000)
-            result = str(n_neighbors)
+            if ok:
+                result = str(n_neighbors)
+            else:
+                return
 
         if metodo == 'Random Forests':
             # Req n_estimators, criterion
-            n_estimators, _ = QInputDialog.getInt(self, u"Parámetro n_estimators - Random Forests",
-                                                  u"Introduzca el valor de n_estimators para Random Forests: ", 10,
-                                                  min=1, max=1000)
-            criterion_rf, _ = QInputDialog.getItem(self, u"Parámetro criterion - Random Forests",
-                                                   u"Seleccione el valor de criterion para Random Forests: ",
-                                                   crits, 0, False)
-            result = (str(n_estimators) + ', ' + str(criterion_rf))
+            n_estimators, ok = QInputDialog.getInt(self, u"Parámetro n_estimators - Random Forests",
+                                                   u"Introduzca el valor de n_estimators para Random Forests: ", 10,
+                                                   min=1, max=1000)
+            criterion_rf, ok2 = QInputDialog.getItem(self, u"Parámetro criterion - Random Forests",
+                                                     u"Seleccione el valor de criterion para Random Forests: ",
+                                                     crits, 0, False)
+            if ok and ok2:
+                result = (str(n_estimators) + ', ' + str(criterion_rf))
+            else:
+                return
 
         if metodo == 'SVM':
             # Req kernel, gamma, c (gamma no tiene si kernel es linear)
-            kernel, _ = QInputDialog.getItem(self, u"Parámetro kernel - SVM",
-                                             u"Seleccione el valor de kernel para SVM: ",
-                                             kern, 0, False)
-            C, _ = QInputDialog.getDouble(self, u"Parámetro C - SVM", u"Seleccione el valor de C para SVM", 1.0,
-                                          decimals=5, min=0.00001, max=10.0)
+            kernel, ok = QInputDialog.getItem(self, u"Parámetro kernel - SVM",
+                                              u"Seleccione el valor de kernel para SVM: ",
+                                              kern, 0, False)
+            C, ok2 = QInputDialog.getDouble(self, u"Parámetro C - SVM", u"Seleccione el valor de C para SVM", 1.0,
+                                            decimals=5, min=0.00001, max=10.0)
 
             if kernel == 'poly' or kernel == 'sigmoid' or kernel == 'rbf':
                 # Necesitamos gamma
-                gamma, _ = QInputDialog.getDouble(self, u'Parámetro gamma - SVM',
-                                                  u"Introduzca el valor de gamma para SVM: ", 0.0, decimals=5,
-                                                  min=0.00001, max=10.0)
+                gamma, ok3 = QInputDialog.getDouble(self, u'Parámetro gamma - SVM',
+                                                    u"Introduzca el valor de gamma para SVM: ", 0.0, decimals=5,
+                                                    min=0.00001, max=10.0)
                 if gamma == 0.0:
                     gamma = 'scale'
             else:
                 gamma = 'scale'
 
-            result = str(kernel) + ', ' + str(C) + ', ' + str(gamma)
+            if ok and ok2 or ok3:
+                result = str(kernel) + ', ' + str(C) + ', ' + str(gamma)
+            else:
+                return
 
         if metodo == 'Decision Tree':
             # criterion
-            criterion_dt, _ = QInputDialog.getItem(self, u"Parámetro criterion - Decision Tree",
-                                                   u"Seleccione el valor de criterion para Decision Tree: ",
-                                                   crits, 0, False)
-            result = str(criterion_dt)
+            criterion_dt, ok = QInputDialog.getItem(self, u"Parámetro criterion - Decision Tree",
+                                                    u"Seleccione el valor de criterion para Decision Tree: ",
+                                                    crits, 0, False)
+            if ok:
+                result = str(criterion_dt)
+            else:
+                return
     return result
 
-
-# TODO: no usada \/
-def classify(self, classif, nfolds, fname):
-    call = []
-    for i in range(0, len(classif)):
-        # main_c = classif[i][0]
-        # base = classif[i][1]
-
-        if classif[i][0] == 'Binary Relevance':
-            if classif[i][1] == 'kNN':
-                call.append(BinaryRelevance(classifier=KNeighborsClassifier(n_neighbors=n_neighbors),
-                                       require_dense=[False, True]))
-            if classif[i][1] == 'Random Forests':
-                call.append(BinaryRelevance(classifier=RandomForestClassifier(n_estimators=n_estimators,
-                                        criterion=str(criterion_rf)), require_dense=[False, True]))
-            if classif[i][1] == 'SVM':
-                call.append(BinaryRelevance(classifier=SVC(C=C, kernel=str(kernel), gamma='scale', probability=True),
-                                       require_dense=[False, True]))
-            if classif[i][1] == 'Decision Tree':
-                call.append(BinaryRelevance(classifier=DecisionTreeClassifier(criterion=str(criterion_dt)),
-                                       require_dense=[False, True]))
-
-        if classif[i][0] == 'Label Powerset':
-            if classif[i][1] == 'kNN':
-                call.append(LabelPowerset(classifier=KNeighborsClassifier(n_neighbors=n_neighbors),
-                                       require_dense=[False, True]))
-            if classif[i][1] == 'Random Forests':
-                call.append(LabelPowerset(classifier=RandomForestClassifier(n_estimators=n_estimators,
-                                        criterion=str(criterion_rf)), require_dense=[False, True]))
-            if classif[i][1] == 'SVM':
-                call.append(LabelPowerset(classifier=SVC(C=C, kernel=str(kernel), gamma='scale', probability=True),
-                                       require_dense=[False, True]))
-            if classif[i][1] == 'Decision Tree':
-                call.append(LabelPowerset(classifier=DecisionTreeClassifier(criterion=str(criterion_dt)),
-                                       require_dense=[False, True]))
-
-        if classif[i][0] == 'Classifier Chain':
-            if classif[i][1] == 'kNN':
-                call.append(ClassifierChain(classifier=KNeighborsClassifier(n_neighbors=n_neighbors),
-                                       require_dense=[False, True]))
-            if classif[i][1] == 'Random Forests':
-                call.append(ClassifierChain(classifier=RandomForestClassifier(n_estimators=n_estimators,
-                                        criterion=str(criterion_rf)), require_dense=[False, True]))
-            if classif[i][1] == 'SVM':
-                call.append(ClassifierChain(classifier=SVC(C=C, kernel=str(kernel), gamma='scale', probability=True),
-                                       require_dense=[False, True]))
-            if classif[i][1] == 'Decision Tree':
-                call.append(ClassifierChain(classifier=DecisionTreeClassifier(criterion=str(criterion_dt)),
-                                       require_dense=[False, True]))
-
-        if classif[i][0] == 'MlKNN':
-            call.append(MLkNN(k=k))
-
-    global ejecs
-
-    if nfolds > 0:
-        for cl in call:
-            if self.checkmt1.isChecked():
-                ejecs += 1
-            if self.checkmt2.isChecked():
-                ejecs += 1
-            if self.checkmt3.isChecked():
-                ejecs += 1
-
-        for cl in call:
-            # print c
-            if not os.path.exists(str(dir) + '/csv/'):
-                os.makedirs(str(dir) + '/csv/')
-
-            if self.checkmt1.isChecked():  # Se ha marcado realizar clasificac con estratif iterativo
-
-                make_classif(self, nfolds, fname, cl, 'iterative')
-
-            if self.checkmt2.isChecked():  # Se ha marcado realizar clasificac con estratif aleatorio
-
-                make_classif(self, nfolds, fname, cl, 'random')
-
-            # if os.path.isfile(str(fname)[:str(fname).rfind('.')] + '_iterative3.train'):
-            if self.checkmt3.isChecked():  # Se ha marcado realizar clasificac con estratif de labelset
-
-                make_classif(self, nfolds, fname, cl, 'labelset')
-    else:
-        self.emit(SIGNAL('infoclassif'), 'ERROR1')
-
-
+# TODO: Nno usada
 def configure(self, classif, nfolds, fname):
     global k
     global n_neighbors

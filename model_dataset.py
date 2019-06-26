@@ -1,13 +1,12 @@
 # coding=utf-8
-from PyQt4.QtGui import *
-from PyQt4.QtCore import *
-import sys
 import os
-import numpy as np
 from collections import Counter
+
 import arff
-import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
 
 temp = 1
 
@@ -203,7 +202,6 @@ def convert(self, fname, dir):
 
 
 def cardinality(self, df):
-
     tmp = os.path.basename(str(df))
     dat = os.path.splitext(tmp)[0]
 
@@ -238,7 +236,7 @@ def cardinality(self, df):
 
         nwdfname = str(df)[:str(df).rfind('.')] + "_measures.report"
 
-        self.emit(SIGNAL('textoinf'), "\nMedidas del dataset "+str(dat)+':')
+        self.emit(SIGNAL('textoinf'), "\nMedidas del dataset " + str(dat) + ':')
         fp = open(nwdfname, 'w')
         fp.write("Instances: " + str(instances) + '\n')
         self.emit(SIGNAL('textoinf'), ">Instances: " + str(instances))
@@ -264,7 +262,8 @@ def cardinality(self, df):
                     # print avg
                 else:
                     # Sparse . find '[' and start reading until ']'
-                    label = map(int, l4.strip().split()[l4.strip().split().index('[') + 1:l4.strip().split().index(']')])
+                    label = map(int,
+                                l4.strip().split()[l4.strip().split().index('[') + 1:l4.strip().split().index(']')])
                     dist.append(''.join(
                         map(str, l4.strip().split()[l4.strip().split().index('[') + 1:l4.strip().split().index(']')])))
                     tmp = sum(label)
@@ -528,7 +527,8 @@ def coov(self, name, dir, plt1, plt2):
 
         if plt1:
             labelscorrel = [len(l0), len(l1), len(l2), len(l3), len(l4), len(l5), len(l6), len(l7), len(l8), len(l9)]
-            objects = ('0-0.1', '0.1-0.2', '0.2-0.3', '0.3-0.4', '0.4-0.5', '0.5-0.6', '0.6-0.7', '0.7-0.8', '0.8-0.9', '0.9-1')
+            objects = (
+            '0-0.1', '0.1-0.2', '0.2-0.3', '0.3-0.4', '0.4-0.5', '0.5-0.6', '0.6-0.7', '0.7-0.8', '0.8-0.9', '0.9-1')
             y_pos = np.arange(len(objects))
             plt.figure(figsize=(7, 5), num='Correlation between labels')
             plt.bar(y_pos, labelscorrel, align='center', alpha=0.5)
@@ -537,7 +537,8 @@ def coov(self, name, dir, plt1, plt2):
             plt.ylabel('Number of label pairs')
             plt.title(str(dat) + ': ' + 'Correlation between labels')
             for i, j in zip(labelscorrel, y_pos):
-                plt.annotate(str(labelscorrel[j]), xy=(j, i + (np.max(labelscorrel) * 0.01)), horizontalalignment='center')
+                plt.annotate(str(labelscorrel[j]), xy=(j, i + (np.max(labelscorrel) * 0.01)),
+                             horizontalalignment='center')
 
             if os.path.exists(save):
                 plt.savefig(save + dat + '_corrlabls.png')

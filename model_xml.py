@@ -1,27 +1,29 @@
 # coding=utf-8
-from PyQt4.QtGui import *
-from PyQt4.QtCore import *
-import sys, os, numpy as np, time
+import os
+import time
+import warnings
+from datetime import datetime
 
-from sklearn.exceptions import UndefinedMetricWarning
-from skmultilearn.problem_transform import BinaryRelevance
-from skmultilearn.problem_transform import LabelPowerset
-from skmultilearn.problem_transform import ClassifierChain
-from skmultilearn.adapt import MLkNN
-from sklearn.neighbors import KNeighborsClassifier
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+from lxml import etree
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.units import inch, mm
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, Image, Table
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.exceptions import UndefinedMetricWarning
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
-from lxml import etree
-import model_dataset as md, model_folds as mf, model_clasificacion as mc
-from reportlab.pdfgen import canvas
-from reportlab.lib.units import inch, mm
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, Image, Table, KeepTogether
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib import colors
-from datetime import datetime
-import warnings
+from skmultilearn.adapt import MLkNN
+from skmultilearn.problem_transform import BinaryRelevance
+from skmultilearn.problem_transform import ClassifierChain
+from skmultilearn.problem_transform import LabelPowerset
+
+import model_clasificacion as mc
+import model_dataset as md
+import model_folds as mf
 
 gk = 5
 gn_neighbors = 5
@@ -48,7 +50,7 @@ def load(self):
                     ok = 1
             if not ok == 1:
                 QMessageBox.about(self, "Aviso", u"El archivo XML cargado no es válido, "
-                                                  "revise el contenido o vuelva a generarlo")
+                                                 "revise el contenido o vuelva a generarlo")
                 return ''
         else:
             QMessageBox.about(self, "Aviso", u"El archivo XML cargado no es válido, "
@@ -70,7 +72,7 @@ def load(self):
                     ok = 1
                 else:
                     QMessageBox.about(self, "Aviso", u"El archivo XML cargado no es válido, "
-                                                      "revise el contenido o vuelva a generarlo")
+                                                     "revise el contenido o vuelva a generarlo")
                     return ''
         if ok == 1:
             return filenames[0]
@@ -85,7 +87,6 @@ def savedir(self):
 
 
 def execute_dset(self, fname, dir):
-
     fileds = []
     op1 = []
     op2 = []
@@ -93,7 +94,7 @@ def execute_dset(self, fname, dir):
     op4 = []
     dsactive = 0
     dstmp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-    self.emit(SIGNAL('logcns_ds'), "\n--------------"+dstmp+"----------------\n\n")
+    self.emit(SIGNAL('logcns_ds'), "\n--------------" + dstmp + "----------------\n\n")
 
     if not str(fname) == '':
         tree = etree.parse(str(fname))
@@ -138,14 +139,14 @@ def execute_dset(self, fname, dir):
     if dsactive == 1:
         self.emit(SIGNAL('logcns_ds'), "Ejecutando análisis de dataset\n")
         tstamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        if not os.path.exists(dir+'/report/'):
-            os.makedirs(dir+'/report/')
-        doc = SimpleDocTemplate(dir + '/report/' + str(tstamp)+"_plot-report.pdf")
+        if not os.path.exists(dir + '/report/'):
+            os.makedirs(dir + '/report/')
+        doc = SimpleDocTemplate(dir + '/report/' + str(tstamp) + "_plot-report.pdf")
         styles = getSampleStyleSheet()
         parts = []
         save = str(dir) + '/' + 'tmp/'
-        self.emit(SIGNAL('logcns_ds'), save+'\n')
-        self.emit(SIGNAL('logcns_ds'), fileds[0]+'\n')
+        self.emit(SIGNAL('logcns_ds'), save + '\n')
+        self.emit(SIGNAL('logcns_ds'), fileds[0] + '\n')
         active = 0
         for i in range(0, len(fileds)):
             cnt = 0
@@ -175,7 +176,7 @@ def execute_dset(self, fname, dir):
                     active = 1
                     try:
                         df = md.convert(self, fileds[i], dir)
-                        self.emit(SIGNAL('prog1'), prog/2)
+                        self.emit(SIGNAL('prog1'), prog / 2)
 
                         report, insts = md.cardinality(self, df)
                         self.emit(SIGNAL('prog1'), prog)
@@ -229,13 +230,15 @@ def execute_dset(self, fname, dir):
                         parts.append(Spacer(1, 0.4 * inch))
                         tmp = []
                         for l in range(0, 6):
-                            if len(headers)>0 and len(data)>0:
-                                tmp.append(headers[l:l+1] + data[l:l+1])
+                            if len(headers) > 0 and len(data) > 0:
+                                tmp.append(headers[l:l + 1] + data[l:l + 1])
 
-                        t = Table(tmp, rowHeights=(10*mm, 10*mm, 10*mm, 10*mm, 10*mm, 10*mm), colWidths=(70*mm, 60*mm),
-                                  style=[('GRID',(0,0),(-1,-1),0.5,colors.black), ('BACKGROUND',(0,0),(0,-1), colors.silver),
-                                        ('ALIGN',(0,0),(-1,-1),'CENTER'), ('VALIGN',(0,0),(-1,-1),'MIDDLE'),
-                                        ])
+                        t = Table(tmp, rowHeights=(10 * mm, 10 * mm, 10 * mm, 10 * mm, 10 * mm, 10 * mm),
+                                  colWidths=(70 * mm, 60 * mm),
+                                  style=[('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+                                         ('BACKGROUND', (0, 0), (0, -1), colors.silver),
+                                         ('ALIGN', (0, 0), (-1, -1), 'CENTER'), ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                                         ])
                         parts.append(t)
                         parts.append(Spacer(1, 0.2 * inch))
 
@@ -257,7 +260,8 @@ def execute_dset(self, fname, dir):
                             parts.append(Image(save + dat + '_corrlabls.png'))
                             parts.append(PageBreak())
                     except:
-                        self.emit(SIGNAL('logcns_ds'), 'Error en la generación de gráfica de correlación de etiquetas\n')
+                        self.emit(SIGNAL('logcns_ds'),
+                                  'Error en la generación de gráfica de correlación de etiquetas\n')
 
                 if not op3[i] == 'False':
                     if not os.path.exists(save):
@@ -287,7 +291,6 @@ def execute_dset(self, fname, dir):
                         self.emit(SIGNAL('prog1'), prog)
 
                         if os.path.isfile(save + dat + '_freclbs.png'):
-
                             parts.append(Spacer(1, 0.2 * inch))
                             p = Paragraph(u"Gráfica de frecuencia de las etiquetas", styles["Heading2"])
                             parts.append(p)
@@ -303,7 +306,7 @@ def execute_dset(self, fname, dir):
                 doc.build(parts)
                 self.emit(SIGNAL('logcns_ds'), "Documento PDF generado\n")
                 self.emit(SIGNAL('textoinf'), '\nInforme PDF generado, puede consultarlo en: ' + dir + '/report/' +
-                          str(tstamp)+"_plot-report.pdf\n")
+                          str(tstamp) + "_plot-report.pdf\n")
             except:
                 self.emit(SIGNAL('logcns_ds'), 'Error al generar el documento PDF\n')
                 self.emit(SIGNAL('textoinf'), '\nError al generar el documento PDF')
@@ -314,7 +317,6 @@ def execute_dset(self, fname, dir):
 
 
 def execute_folds(self, fname, dir):
-
     filef = []
     nfls = []
     m1 = []
@@ -386,7 +388,7 @@ def execute_folds(self, fname, dir):
                         mf.gen_folds(self, nfls[i], filef[i], dir, True, False, False)
                     except:
                         self.emit(SIGNAL('logcns_f'), "Se ha producido un error en la "
-                                                      "generación de los folds, método: "+ str(m1[i])) + '\n'
+                                                      "generación de los folds, método: " + str(m1[i])) + '\n'
                         self.emit(SIGNAL('add(QString)'), u">Se ha producido un error en la generación "
                                                           u"de los folds, método: " + str(m1[i]))
 
@@ -411,13 +413,12 @@ def execute_folds(self, fname, dir):
                         self.emit(SIGNAL('add(QString)'), u">Se ha producido un error en la generación "
                                                           u"de los folds, método: " + str(m3[i]))
 
-    self.emit(SIGNAL('logcns_f'), "Paso terminado correctamente"+'\n')
+    self.emit(SIGNAL('logcns_f'), "Paso terminado correctamente" + '\n')
 
     self.emit(SIGNAL('end'))
 
 
 def execute_class(self, fname, dir):
-
     clasactive = 0
     fclass = []
     stratif = []
@@ -453,7 +454,7 @@ def execute_class(self, fname, dir):
                     time.sleep(1)
                     if aux >= 1:
                         meth_count.append(aux)
-                        aux=0
+                        aux = 0
                 if name.get('nfolds'):
                     self.emit(SIGNAL('infoclassif'), '>nfolds: ' + str(name.get('nfolds')))
                     nflds.append(int(name.get('nfolds')))
@@ -539,33 +540,35 @@ def execute_class(self, fname, dir):
                 if meths[j] == 'Binary Relevance':
                     self.emit(SIGNAL('logcns_c'), "Binary Relevance: \n")
                     if csbase[j] == 'kNN':
-                        self.emit(SIGNAL('logcns_c'), "kNN parms: " + str(n_neighbors[j])+'\n')
+                        self.emit(SIGNAL('logcns_c'), "kNN parms: " + str(n_neighbors[j]) + '\n')
 
                         call.append(BinaryRelevance(classifier=KNeighborsClassifier(n_neighbors=int(n_neighbors[j])),
                                                     require_dense=[False, True]))
                         parms.append('n_neighbors= ' + str(n_neighbors[j]))
 
                     if csbase[j] == 'Random Forests':
-                        self.emit(SIGNAL('logcns_c'), "Random Forest parms: " + str(n_estimators[j])+'\n')
+                        self.emit(SIGNAL('logcns_c'), "Random Forest parms: " + str(n_estimators[j]) + '\n')
 
                         call.append(BinaryRelevance(classifier=RandomForestClassifier(n_estimators=int(n_estimators[j]),
-                                                    criterion=str(criterion_rf[j])), require_dense=[False, True]))
+                                                                                      criterion=str(criterion_rf[j])),
+                                                    require_dense=[False, True]))
                         parms.append('n_estimators= ' + str(n_estimators[j]) + ', criterion= ' + str(criterion_rf[j]))
 
                     if csbase[j] == 'SVM':
                         self.emit(SIGNAL('logcns_c'), "SVM parms: " + str(gamma[j]) + ', ' + str(C[j])
-                                  + ', ' + str(kernel[j])+'\n')
+                                  + ', ' + str(kernel[j]) + '\n')
                         try:
                             gamma[j] = float(gamma[j])
                         except ValueError:
                             self.emit(SIGNAL('logcns_c'), "No se puede convertir a float - (valor: scale)")
 
                         call.append(BinaryRelevance(classifier=SVC(C=float(C[j]), kernel=str(kernel[j]),
-                                                    gamma=gamma[j], probability=True), require_dense=[False, True]))
+                                                                   gamma=gamma[j], probability=True),
+                                                    require_dense=[False, True]))
                         parms.append('C= ' + str(C[j]) + ', kernel= ' + str(kernel[j]) + ', gamma= ' + str(gamma[j]))
 
                     if csbase[j] == 'Decision Tree':
-                        self.emit(SIGNAL('logcns_c'), "Decision tree parms: " + str(criterion_dt[j])+'\n')
+                        self.emit(SIGNAL('logcns_c'), "Decision tree parms: " + str(criterion_dt[j]) + '\n')
 
                         call.append(BinaryRelevance(classifier=DecisionTreeClassifier(criterion=str(criterion_dt[j])),
                                                     require_dense=[False, True]))
@@ -574,51 +577,51 @@ def execute_class(self, fname, dir):
                 if meths[j] == 'Label Powerset':
                     self.emit(SIGNAL('logcns_c'), "Label Powerset: \n")
                     if csbase[j] == 'kNN':
-                        self.emit(SIGNAL('logcns_c'), "kNN parms: " + str(n_neighbors[j])+'\n')
+                        self.emit(SIGNAL('logcns_c'), "kNN parms: " + str(n_neighbors[j]) + '\n')
 
                         call.append(LabelPowerset(classifier=KNeighborsClassifier(n_neighbors=int(n_neighbors[j])),
-                                                    require_dense=[False, True]))
+                                                  require_dense=[False, True]))
                         parms.append('n_neighbors= ' + str(n_neighbors[j]))
 
                     if csbase[j] == 'Random Forests':
-                        self.emit(SIGNAL('logcns_c'), "Random Forest parms: " + str(n_estimators[j])+'\n')
+                        self.emit(SIGNAL('logcns_c'), "Random Forest parms: " + str(n_estimators[j]) + '\n')
 
                         call.append(LabelPowerset(classifier=RandomForestClassifier(n_estimators=int(n_estimators[j]),
-                                                                                      criterion=str(criterion_rf[j])),
-                                                    require_dense=[False, True]))
+                                                                                    criterion=str(criterion_rf[j])),
+                                                  require_dense=[False, True]))
                         parms.append('n_estimators= ' + str(n_estimators[j]) + ', criterion= ' + str(criterion_rf[j]))
 
                     if csbase[j] == 'SVM':
                         self.emit(SIGNAL('logcns_c'), "SVM parms: " + str(gamma[j]) + ', ' + str(C[j])
-                                  + ', ' + str(kernel[j])+'\n')
+                                  + ', ' + str(kernel[j]) + '\n')
                         try:
                             gamma[j] = float(gamma[j])
                         except ValueError:
                             self.emit(SIGNAL('logcns_c'), "No se puede convertir a float - (valor: scale)")
 
                         call.append(LabelPowerset(classifier=SVC(C=float(C[j]), kernel=str(kernel[j]),
-                                                                   gamma=gamma[j], probability=True),
-                                                    require_dense=[False, True]))
+                                                                 gamma=gamma[j], probability=True),
+                                                  require_dense=[False, True]))
                         parms.append('C= ' + str(C[j]) + ', kernel= ' + str(kernel[j]) + ', gamma= ' + str(gamma[j]))
 
                     if csbase[j] == 'Decision Tree':
-                        self.emit(SIGNAL('logcns_c'), "Decision tree parms: " + str(criterion_dt[j])+'\n')
+                        self.emit(SIGNAL('logcns_c'), "Decision tree parms: " + str(criterion_dt[j]) + '\n')
 
                         call.append(LabelPowerset(classifier=DecisionTreeClassifier(criterion=str(criterion_dt[j])),
-                                                    require_dense=[False, True]))
+                                                  require_dense=[False, True]))
                         parms.append('criterion = ' + str(criterion_dt[j]))
 
                 if meths[j] == 'Classifier Chain':
                     self.emit(SIGNAL('logcns_c'), "Classifier Chain: \n")
                     if csbase[j] == 'kNN':
-                        self.emit(SIGNAL('logcns_c'), "kNN parms: " + str(n_neighbors[j])+'\n')
+                        self.emit(SIGNAL('logcns_c'), "kNN parms: " + str(n_neighbors[j]) + '\n')
 
                         call.append(ClassifierChain(classifier=KNeighborsClassifier(n_neighbors=int(n_neighbors[j])),
                                                     require_dense=[False, True]))
                         parms.append('n_neighbors= ' + str(n_neighbors[j]))
 
                     if csbase[j] == 'Random Forests':
-                        self.emit(SIGNAL('logcns_c'), "Random Forest parms: " + str(n_estimators[j])+'\n')
+                        self.emit(SIGNAL('logcns_c'), "Random Forest parms: " + str(n_estimators[j]) + '\n')
 
                         call.append(ClassifierChain(classifier=RandomForestClassifier(n_estimators=int(n_estimators[j]),
                                                                                       criterion=str(criterion_rf[j])),
@@ -627,7 +630,7 @@ def execute_class(self, fname, dir):
 
                     if csbase[j] == 'SVM':
                         self.emit(SIGNAL('logcns_c'), "SVM parms: " + str(gamma[j]) + ', ' + str(C[j])
-                                  + ', ' + str(kernel[j])+'\n')
+                                  + ', ' + str(kernel[j]) + '\n')
                         try:
                             gamma[j] = float(gamma[j])
                         except ValueError:
@@ -639,13 +642,13 @@ def execute_class(self, fname, dir):
                         parms.append('C= ' + str(C[j]) + ', kernel= ' + str(kernel[j]) + ', gamma= ' + str(gamma[j]))
 
                     if csbase[j] == 'Decision Tree':
-                        self.emit(SIGNAL('logcns_c'), "Decision tree parms: " + str(criterion_dt[j])+'\n')
+                        self.emit(SIGNAL('logcns_c'), "Decision tree parms: " + str(criterion_dt[j]) + '\n')
 
                         call.append(ClassifierChain(classifier=DecisionTreeClassifier(criterion=str(criterion_dt[j])),
                                                     require_dense=[False, True]))
                         parms.append('criterion = ' + str(criterion_dt[j]))
                 if meths[j] == 'MlKNN':
-                    self.emit(SIGNAL('logcns_c'), "MlKNN parms: " + str(k[j])+'\n')
+                    self.emit(SIGNAL('logcns_c'), "MlKNN parms: " + str(k[j]) + '\n')
                     call.append(MLkNN(k=int(k[j])))
                     parms.append('k= ' + str(k[j]))
 
@@ -657,7 +660,7 @@ def execute_class(self, fname, dir):
                     suffix = os.path.splitext(suffix)[0]
                     self.emit(SIGNAL('infoclassif'), u'\n>Dataset: ' + str(suffix))
 
-                    for z in range(rn, rn+meth_count[i]):
+                    for z in range(rn, rn + meth_count[i]):
 
                         try:
                             with warnings.catch_warnings():
@@ -665,17 +668,18 @@ def execute_class(self, fname, dir):
                                 mc.make_classif(self, nflds[i], fclass[i], call[z], parms[z], stratif[z], dir)
                         except Exception as e:
                             self.emit(SIGNAL('logcns_c'), "Se ha producido un error durante la clasificación, método: "
-                                      + str(call[z]).split('(')[0]+'\n')
-                            self.emit(SIGNAL('logcns_c'), str(e)+'\n')
+                                      + str(call[z]).split('(')[0] + '\n')
+                            self.emit(SIGNAL('logcns_c'), str(e) + '\n')
                             self.emit(SIGNAL('infoclassif'), u"☒ Se ha producido un error durante "
-                                                             u"la clasificación, método: " + str(call[z]).split('(')[0]+
+                                                             u"la clasificación, método: " + str(call[z]).split('(')[
+                                          0] +
                                       '\nError: ' + str(e))
                     rn = meth_count[i]
 
                 else:
                     self.emit(SIGNAL('infoclassif'), 'ERROR1')
             except Exception as e:
-                self.emit(SIGNAL('logcns_c'), "Error al ejecutar la clasificación, e: "+ str(e)+'\n')
+                self.emit(SIGNAL('logcns_c'), "Error al ejecutar la clasificación, e: " + str(e) + '\n')
 
         self.emit(SIGNAL('logcns_c'), "Clasificación terminada correctamente")
         self.emit(SIGNAL('infoclassif'), u'\nTerminado\n')

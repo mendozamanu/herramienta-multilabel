@@ -1,15 +1,15 @@
 # coding=utf-8
+import io
+import os
 import shutil
 import sys
-import os
-from PyQt4.QtGui import *
+from functools import partial
+
 from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+from lxml import etree
 
 import ctrl
-from lxml import etree
-from functools import partial
-import io
-
 
 # KNOWN BUGS:
 #        1. cuando termina la ejecucion salen 2 errors/warnings sobre QObject::startTimer: Qtimer solo se puede usar en
@@ -196,8 +196,8 @@ class PlotWindow(QMainWindow):
             # self.close()
 
     def log(self, txt):
-        if not os.path.exists(wdir+'/log/'):
-            os.makedirs(wdir+'/log/')
+        if not os.path.exists(wdir + '/log/'):
+            os.makedirs(wdir + '/log/')
         logger = wdir + '/log/dump.log'
         fp = io.open(logger, 'a', encoding='utf-8')
         txt = unicode(txt, 'utf-8')
@@ -261,8 +261,8 @@ class PlotWindow(QMainWindow):
 
 class XmlW(QMainWindow):
     def loadXmlW(self):
-        global xmlname
-        
+        global xmlname, dir
+
         self.setCentralWidget(QWidget(self))
 
         self.threadPool = []
@@ -278,6 +278,8 @@ class XmlW(QMainWindow):
         self.workingDir = QLineEdit()  # Para cargar el xml a ejecutar
         self.workingDir.setReadOnly(True)
         self.workingDir.setText(wdir)
+        if not wdir == '':
+            dir = wdir
         self.btn2 = QPushButton("Seleccionar directorio de trabajo")
         self.info = QTextEdit()
         self.info.setReadOnly(True)
@@ -324,9 +326,11 @@ class XmlW(QMainWindow):
 
     def getWorkingDir(self):
         global dir, wdir
-        dir = ctrl.getsaveDir(self)
-        wdir = dir
-        self.workingDir.setText(str(dir))
+        ret = ctrl.getsaveDir(self)
+        if not ret == '':
+            wdir = ret
+            dir = ret
+            self.workingDir.setText(str(dir))
 
     def adds(self, info):  # Dataset operations
 
@@ -463,7 +467,7 @@ class XmlW(QMainWindow):
         global xmlUI, xW, tempxml, xmlname, dir, p1
         xmlUI = None
         xW = False
-        p1 = False # No vuelve a cargar la ventana si cerramos con (X) la ventana - p1 a true
+        p1 = False  # No vuelve a cargar la ventana si cerramos con (X) la ventana - p1 a true
         tempxml = xmlname
         xmlname = ''
         dir = './'
@@ -769,8 +773,8 @@ class ClassifW(QMainWindow):
                     pass
                 else:
                     reply = QMessageBox.question(self, "Aviso", u"Debería añadir al menos un "
-                                                 u"método de clasificación para cada dataset. ¿Desea continuar "
-                                                 u"de todos modos?", QMessageBox.Yes |
+                                                                u"método de clasificación para cada dataset. ¿Desea continuar "
+                                                                u"de todos modos?", QMessageBox.Yes |
                                                  QMessageBox.No, QMessageBox.Yes)
                     if reply == QMessageBox.Yes:
                         pass
@@ -779,8 +783,9 @@ class ClassifW(QMainWindow):
                         return 'error'
             else:
                 reply = QMessageBox.question(self, "Aviso", u"Hay algún dataset para el cual no "
-                                             u"se pueden añadir métodos de clasificación. ¿Desea continuar "
-                                             u"de todos modos?", QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+                                                            u"se pueden añadir métodos de clasificación. ¿Desea continuar "
+                                                            u"de todos modos?", QMessageBox.Yes | QMessageBox.No,
+                                             QMessageBox.Yes)
                 if reply == QMessageBox.Yes:
                     pass
                 else:
@@ -805,7 +810,6 @@ class ClassifW(QMainWindow):
 
                         self.child2.set("m1", 'Iterative')
                         for k in range(0, len(datasets[i].estratif[j].methods)):
-
                             self.child3 = etree.SubElement(self.child2, "metodo")
                             self.child3.set("cbase", str(datasets[i].estratif[j].methods[k].cbase))
                             self.child3.set("method", str(datasets[i].estratif[j].methods[k].method))
@@ -841,7 +845,7 @@ class ClassifW(QMainWindow):
                 f.write(etree.tostring(my_tree))
                 self.txt.setText("Guardado fichero XML, ruta: " + str(dlg))
                 xmlname = str(dlg)
-                self.log("Guardado xml: " +str(xmlname) + '\n')
+                self.log("Guardado xml: " + str(xmlname) + '\n')
                 # print etree.tostring(root, pretty_print=True)
 
                 reply = QMessageBox.question(self, u'Información',
@@ -973,7 +977,7 @@ class DatasetW(QMainWindow):
         if not file == '':  # No se ha cancelado la operac
             exists = self.list.findItems(file, Qt.MatchRegExp)
             if not exists:
-                it=QListWidgetItem(file)
+                it = QListWidgetItem(file)
                 self.list.addItem(it)
                 self.contents.append(file)
                 self.c1.setEnabled(True)
@@ -1021,7 +1025,7 @@ class DatasetW(QMainWindow):
         global datasets
         for SelectedItem in self.list.selectedItems():
             print 'len bf: ' + str(len(datasets))
-            #print self.list.row(SelectedItem)
+            # print self.list.row(SelectedItem)
             datasets.pop(self.list.row(SelectedItem))
             item = self.list.takeItem(self.list.row(SelectedItem))
             print 'len aft: ' + str(len(datasets))
@@ -1065,7 +1069,7 @@ class DatasetW(QMainWindow):
         else:
             self.contents.append("Guardado cancelado")
 
-        #print etree.tostring(my_tree, pretty_print=True)
+        # print etree.tostring(my_tree, pretty_print=True)
 
 
 class FoldsW(QMainWindow):
@@ -1203,7 +1207,6 @@ class FoldsW(QMainWindow):
         if len(itms) >= 1:
             for d in itms:
                 for l in reversed(range(0, len(datasets[d.row()].estratif))):
-
                     datasets[d.row()].del_estratif(l)
                     # Esto reseteará los estratifs si volvemos a añadir sobre uno ya establecido
             if int(self.nlabels.text()) < 2:
@@ -1281,7 +1284,7 @@ class FoldsW(QMainWindow):
         for i in range(0, len(datasets)):
             if not len(datasets[i].estratif) > 0:
                 reply = QMessageBox.question(self, "Aviso", u"Aviso: No se han añadido estratificados "
-                                             u"a uno o varios datasets, ¿desea continuar?",
+                                                            u"a uno o varios datasets, ¿desea continuar?",
                                              QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
 
                 if reply == QMessageBox.No:
@@ -1311,7 +1314,7 @@ class FoldsW(QMainWindow):
                             self.child2.set("m3", 'Labelset')
                 else:
                     self.flabel3.setText(u"Aviso. No se ha añadido ningún estratificado")
-                    #return
+                    # return
 
             my_tree = etree.ElementTree(root)
 
@@ -1490,7 +1493,7 @@ class MainApplication(QMainWindow):
         for i in range(0, len(datasets)):
             if not len(datasets[i].estratif) > 0:
                 reply = QMessageBox.question(self.FoldUI, "Aviso", u"Aviso: No se han añadido estratificados "
-                                             u"a uno o varios datasets, ¿desea continuar?",
+                                                                   u"a uno o varios datasets, ¿desea continuar?",
                                              QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
 
                 if reply == QMessageBox.No:

@@ -1,18 +1,17 @@
 # coding=utf-8
-from PyQt4.QtGui import *
-from PyQt4.QtCore import *
-import sys
 import os
-import numpy as np
-import arff
-from skmultilearn.model_selection import IterativeStratification
-from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import KFold
 
-from skmultilearn.model_selection.measures import folds_label_combination_pairs_without_evidence
+import arff
+import numpy as np
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+from sklearn.model_selection import KFold
+from sklearn.model_selection import StratifiedKFold
+from skmultilearn.model_selection import IterativeStratification
 from skmultilearn.model_selection.measures import example_distribution
-from skmultilearn.model_selection.measures import label_combination_distribution
+from skmultilearn.model_selection.measures import folds_label_combination_pairs_without_evidence
 from skmultilearn.model_selection.measures import folds_without_evidence_for_at_least_one_label_combination
+from skmultilearn.model_selection.measures import label_combination_distribution
 
 
 def get_filename(self):
@@ -77,7 +76,6 @@ def stratified_folds(n_splits, y):
 
 
 def aux_fold(suffix, kfold, X, train_index, X_train, X_test, y_train, y_test, f, sparse, number):
-
     folds = train_index
     desired_number = (X.shape[0] * (f - 1)) / f
     # Training file
@@ -175,8 +173,9 @@ def exec_fold(self, suffix, kf, X, y, f, sparse, number):
         for train_index, test_index in kf.split(X, y):
             X_train, X_test = X[train_index], X[test_index]
             y_train, y_test = y[train_index], y[test_index]
-            kfold, fd, d_n = aux_fold(suffix, kfold, X, train_index, X_train, X_test, y_train, y_test, f, sparse, number)
-            self.completed += 100/f
+            kfold, fd, d_n = aux_fold(suffix, kfold, X, train_index, X_train, X_test, y_train, y_test, f, sparse,
+                                      number)
+            self.completed += 100 / f
             self.emit(SIGNAL("update(int)"), self.completed)
             # self.progress.setValue(self.completed)
             folds.append(fd)
@@ -186,8 +185,9 @@ def exec_fold(self, suffix, kf, X, y, f, sparse, number):
             train_index = [x for x in range(X.shape[0]) if x not in test_index]
             X_train, X_test = X[train_index], X[test_index]
             y_train, y_test = y[train_index], y[test_index]
-            kfold, fd, d_n = aux_fold(suffix, kfold, X, train_index, X_train, X_test, y_train, y_test, f, sparse, number)
-            self.completed += 100/f
+            kfold, fd, d_n = aux_fold(suffix, kfold, X, train_index, X_train, X_test, y_train, y_test, f, sparse,
+                                      number)
+            self.completed += 100 / f
             self.emit(SIGNAL("update(int)"), self.completed)
             # self.progress.setValue(self.completed)
             folds.append(fd)
@@ -210,7 +210,6 @@ def exec_fold(self, suffix, kf, X, y, f, sparse, number):
 
 
 def gen_folds(self, nfolds, fname, dir, mk1, mk2, mk3):
-
     if not str(fname).lower().endswith('.arff'):
         self.emit(SIGNAL('add(QString)'), 'ERROR2')
         # sys.exit(u"Formato del dataset no válido, por favor use .arff datasets")
@@ -331,7 +330,7 @@ def gen_folds(self, nfolds, fname, dir, mk1, mk2, mk3):
                     # Vemos si nº fichs dentro de la carpeta adecuada es al menos 2* nfolds +1 (measures)
                     cnt = len([name for name in os.listdir(route) if os.path.isfile(os.path.join(route, name))])
 
-                    if cnt < 2*nfolds+1:
+                    if cnt < 2 * nfolds + 1:
                         kf1 = IterativeStratification(n_splits=int(nfolds), order=1)
 
                         self.emit(SIGNAL('add(QString)'), ">Se han detectado particiones iterativas incompletas")

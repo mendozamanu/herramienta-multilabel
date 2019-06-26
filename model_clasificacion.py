@@ -1,26 +1,16 @@
 # coding=utf-8
 
-from PyQt4.QtGui import *
-from PyQt4.QtCore import *
-import numpy as np
-import sys
+import functools
 import os.path
 from datetime import datetime
+
+import numpy as np
 import scipy.sparse as sp
-import functools
-import sklearn.metrics.base
-from skmultilearn.problem_transform import BinaryRelevance
-from skmultilearn.problem_transform import LabelPowerset
-from skmultilearn.problem_transform import ClassifierChain
-from skmultilearn.adapt import MLkNN
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.svm import SVC
-from sklearn.tree import DecisionTreeClassifier
-
 import sklearn.metrics
-from sklearn.metrics import classification_report, confusion_matrix
-
+import sklearn.metrics.base
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+from sklearn.metrics import classification_report
 
 # Parametros para los clasificadores base
 gk = 5
@@ -136,7 +126,6 @@ def average_precision_score(y_true, y_score, average="macro", pos_label=1,
 
 
 def make_classif(self, nfolds, fname, cl, parm, stratif, dir):
-
     fold_accuracy = []
     fold_hamming = []
     fold_prec = []
@@ -150,7 +139,7 @@ def make_classif(self, nfolds, fname, cl, parm, stratif, dir):
         os.makedirs(str(dir) + '/csv/')
 
     if stratif == 'Random':
-        outpname = dir + '/csv/'+str(cl).split('(')[0]+'_random.csv'
+        outpname = dir + '/csv/' + str(cl).split('(')[0] + '_random.csv'
 
     if stratif == 'Labelset':
         outpname = dir + '/csv/' + str(cl).split('(')[0] + '_labelset.csv'
@@ -174,7 +163,7 @@ def make_classif(self, nfolds, fname, cl, parm, stratif, dir):
 
     for i in range(0, nfolds):
 
-        prog += 100/nfolds
+        prog += 100 / nfolds
         self.emit(SIGNAL("progress"), prog)
         skip = 0
 
@@ -281,15 +270,14 @@ def make_classif(self, nfolds, fname, cl, parm, stratif, dir):
     fd.write('\n')
 
     self.emit(SIGNAL('infoclassif'), u"☑ Terminado")
-    self.emit(SIGNAL('infoclassif'), u">>>Consulte el fichero resultante en: " + str(outpname)+'\n')
+    self.emit(SIGNAL('infoclassif'), u">>>Consulte el fichero resultante en: " + str(outpname) + '\n')
 
 
 def getargs(self, metodo):
-
     if metodo == 'MlKNN':
         # Requiere parametro k
         k, ok = QInputDialog.getInt(self, u"Parámetro k - MlKNN", u"Introduzca el valor de k para MlKNN: ", 5,
-                                   min=1, max=1000)
+                                    min=1, max=1000)
         if ok:
             result = str(k)
         else:
@@ -355,6 +343,7 @@ def getargs(self, metodo):
                 return
     return result
 
+
 # TODO: Nno usada
 def configure(self, classif, nfolds, fname):
     global k
@@ -384,8 +373,8 @@ def configure(self, classif, nfolds, fname):
         else:
             self.child3.set("stratif3", '')
 
-        self.child3.set("method"+str(i), str(classif[i][0]))
-        self.child3.set("cbase"+str(i), str(classif[i][1]))
+        self.child3.set("method" + str(i), str(classif[i][0]))
+        self.child3.set("cbase" + str(i), str(classif[i][1]))
         if classif[i][0] == 'MlKNN':
             # Requiere parametro k
             k, _ = QInputDialog.getInt(self, u"Parámetro k - MlKNN", u"Introduzca el valor de k para MlKNN: ", 5)
@@ -397,17 +386,17 @@ def configure(self, classif, nfolds, fname):
             if classif[i][1] == 'kNN':
                 # Req n_neighbors
                 n_neighbors, _ = QInputDialog.getInt(self, u"Parámetro n_neighbors - kNN", u"Introduzca el valor "
-                                                                                            u"de n_neighbors para "
-                                                                                            u"kNN: ", 5)
+                                                                                           u"de n_neighbors para "
+                                                                                           u"kNN: ", 5)
                 self.child3.set("n_neighbors" + str(i), str(n_neighbors))
                 # print n_neighbors
             if classif[i][1] == 'Random Forests':
                 # Req n_estimators, criterion
                 n_estimators, _ = QInputDialog.getInt(self, u"Parámetro n_estimators - Random Forests",
-                                                   u"Introduzca el valor de n_estimators para Random Forests: ", 10)
+                                                      u"Introduzca el valor de n_estimators para Random Forests: ", 10)
                 criterion_rf, _ = QInputDialog.getItem(self, u"Parámetro criterion - Random Forests",
-                                                    u"Seleccione el valor de criterion para Random Forests: ",
-                                                    crits, 0, False)
+                                                       u"Seleccione el valor de criterion para Random Forests: ",
+                                                       crits, 0, False)
                 self.child3.set("n_estimators" + str(i), str(n_estimators))
                 self.child3.set("criterion_rf" + str(i), str(criterion_rf))
                 # print n_estimators

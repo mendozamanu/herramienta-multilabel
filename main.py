@@ -232,10 +232,10 @@ class PlotWindow(QMainWindow):
 
                     f.close()
                     fr.close()
-            QMessageBox.about(self, "Correcto", u"Gráficas guardadas correctamente en el directorio: " + str(route))
+            QMessageBox.information(self, "Correcto", u"Gráficas guardadas correctamente en el directorio: " + str(route))
             self.log("Gráficas - guardado correcto")
         else:
-            QMessageBox.about(self, "Cancelado", u"Guardado cancelado")
+            QMessageBox.information(self, "Cancelado", u"Guardado cancelado")
             self.log("Gráficas - guardado cancelado")
 
     def save(self, fname):
@@ -250,13 +250,13 @@ class PlotWindow(QMainWindow):
                 fr = open(dir + '/tmp/' + fname, 'rb')
                 data = fr.read()
                 f.write(data)
-                QMessageBox.about(self, "OK", u"Gráfica guardada, ruta: " + str(dlg))
+                QMessageBox.information(self, "OK", u"Gráfica guardada, ruta: " + str(dlg))
                 self.log("Gráfica " + str(fname) + " - guardado correcto")
 
                 f.close()
                 fr.close()
         else:
-            QMessageBox.about(self, "Cancelado", u"Guardado cancelado")
+            QMessageBox.information(self, "Cancelado", u"Guardado cancelado")
 
 
 class XmlW(QMainWindow):
@@ -352,9 +352,9 @@ class XmlW(QMainWindow):
         if str(info) == 'Head':
             self.info.append(u"1. Análisis del dataset\nInformación cargada: ")
         if str(info) == 'ERROR1':
-            QMessageBox.about(self, "Error", "Error en el formato de la cabecera del fichero de dataset")
+            QMessageBox.warning(self, "Error", "Error en el formato de la cabecera del fichero de dataset")
         if str(info) == 'ERROR2':
-            QMessageBox.about(self, "Error", "Error al cargar el dataset, por favor use datasets con formato .arff")
+            QMessageBox.warning(self, "Error", "Error al cargar el dataset, por favor use datasets con formato .arff")
 
     def add(self, text):  # Folds operations
         # print text
@@ -371,9 +371,9 @@ class XmlW(QMainWindow):
         if text == '3':
             mk3 = True
         if text == 'ERROR1':
-            QMessageBox.about(self, "Error", "Error en el formato de la cabecera del fichero de dataset")
+            QMessageBox.warning(self, "Error", "Error en el formato de la cabecera del fichero de dataset")
         if text == 'ERROR2':
-            QMessageBox.about(self, "Error", "Error al cargar el dataset, por favor use datasets con formato .arff")
+            QMessageBox.warning(self, "Error", "Error al cargar el dataset, por favor use datasets con formato .arff")
 
         if text == 'Iterative':
             self.info.append(u">Método seleccionado: " + text)
@@ -690,7 +690,7 @@ class ClassifW(QMainWindow):
                     # print args
                     else:
                         self.txt.setText(u"Clasificación cancelada")
-                        QMessageBox.about(self, "Aviso", u"Operación cancelada")
+                        QMessageBox.information(self, "Aviso", u"Operación cancelada")
                         return
                 else:
                     args = ctrl.getargs(self, str(self.methods.currentText()))  # Le pasamos mlknn
@@ -698,7 +698,7 @@ class ClassifW(QMainWindow):
                         c.addcbase('-')
                     else:
                         self.txt.setText(u"Clasificación cancelada")
-                        QMessageBox.about(self, "Aviso", u"Operación cancelada")
+                        QMessageBox.information(self, "Aviso", u"Operación cancelada")
                         return
 
                     # print args
@@ -728,7 +728,7 @@ class ClassifW(QMainWindow):
 
                 self.txt.setText(u"Añadido correctamente")
         else:
-            QMessageBox.about(self, "Aviso", u"No se puede añadir sin seleccionar previamente un dataset")
+            QMessageBox.information(self, "Aviso", u"No se puede añadir sin seleccionar previamente un dataset")
 
     def signalDisable(self):
         if self.methods.currentText() == 'MlKNN':
@@ -792,7 +792,7 @@ class ClassifW(QMainWindow):
                     self.txt.setText("Guardado cancelado")
                     return 'error'
         if len(datasets) < 1:
-            QMessageBox.about(self, "Error", u"Error. No se han añadido datasets")
+            QMessageBox.warning(self, "Error", u"Error. No se han añadido datasets")
         else:
             for i in range(0, len(datasets)):
                 self.child1 = etree.SubElement(root, "dataset")
@@ -939,9 +939,9 @@ class DatasetW(QMainWindow):
 
     def add(self, text):
         if text == 'ERROR1':
-            QMessageBox.about(self, "Error", "Error al cargar el dataset, por favor use datasets con formato .arff")
+            QMessageBox.warning(self, "Error", "Error al cargar el dataset, por favor use datasets con formato .arff")
         elif text == 'ERROR2':
-            QMessageBox.about(self, "Error", "Error en el formato de la cabecera del fichero de dataset")
+            QMessageBox.warning(self, "Error", "Error en el formato de la cabecera del fichero de dataset")
         else:
             self.contents.append(text)
 
@@ -1003,7 +1003,7 @@ class DatasetW(QMainWindow):
                 proxy.setSourceModel(self.list.model())
 
             else:
-                QMessageBox.about(self, "Aviso", u"El dataset a cargar ya se ha añadido anteriormente")
+                QMessageBox.warning(self, "Aviso", u"El dataset a cargar ya se ha añadido anteriormente")
 
         else:
             self.contents.append(u"Operación cancelada")
@@ -1191,7 +1191,7 @@ class FoldsW(QMainWindow):
         itms = self.lst.selectedIndexes()
 
         if len(itms) < 1:
-            QMessageBox.about(self, "Aviso", u"Aviso. No se ha seleccionado ningún dataset.")
+            QMessageBox.warning(self, "Aviso", u"Aviso. No se ha seleccionado ningún dataset.")
         c1 = self.checkmt1.isChecked()
         c2 = self.checkmt2.isChecked()
         c3 = self.checkmt3.isChecked()
@@ -1200,7 +1200,7 @@ class FoldsW(QMainWindow):
             if self.editable == 1:
                 pass  # Permitimos guardar sin ningún metodo de estratificación
             else:
-                QMessageBox.about(self, "Aviso", u"Aviso. No se ha seleccionado ningún método de estratificación.")
+                QMessageBox.warning(self, "Aviso", u"Aviso. No se ha seleccionado ningún método de estratificación.")
                 self.lst.setSelectionMode(QAbstractItemView.SingleSelection)
                 return
 
@@ -1210,7 +1210,7 @@ class FoldsW(QMainWindow):
                     datasets[d.row()].del_estratif(l)
                     # Esto reseteará los estratifs si volvemos a añadir sobre uno ya establecido
             if int(self.nlabels.text()) < 2:
-                QMessageBox.about(self, "Aviso", u"No se pueden ejecutar particiones con 0 ó 1 folds.")
+                QMessageBox.warning(self, "Aviso", u"No se pueden ejecutar particiones con 0 ó 1 folds.")
                 self.lst.setSelectionMode(QAbstractItemView.SingleSelection)
                 return
 
@@ -1348,6 +1348,7 @@ class FoldsW(QMainWindow):
 # This is the main Window of the aplication
 class MainApplication(QMainWindow):
     def loadMain(self):
+
         self.setCentralWidget(QWidget(self))
         self.btn1 = QPushButton("Cargar y analizar dataset")
         self.btn2 = QPushButton(u"Configurar folds")
@@ -1438,8 +1439,8 @@ class MainApplication(QMainWindow):
 
         warn = 0
         if len(datasets) < 1:
-            QMessageBox.about(self.DataUI, "Aviso", u"No se ha guardado ningún dataset, "
-                                                    u"añada al menos uno para pasar a la siguiente ventana")
+            QMessageBox.information(self.DataUI, "Aviso", u"No se ha guardado ningún dataset, "
+                                    u"añada al menos uno para pasar a la siguiente ventana")
             return
 
         for i in range(0, len(datasets)):
@@ -1621,6 +1622,7 @@ class MainApplication(QMainWindow):
 
 def main():
     app = QApplication(sys.argv)
+    app.setWindowIcon(QIcon('icon.png'))
 
     translator = QTranslator(app)
     locale = QLocale.system().name()

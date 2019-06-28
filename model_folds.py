@@ -14,40 +14,6 @@ from skmultilearn.model_selection.measures import folds_without_evidence_for_at_
 from skmultilearn.model_selection.measures import label_combination_distribution
 
 
-def get_filename(self):
-    dlg = QFileDialog()
-    dlg.setFileMode(QFileDialog.AnyFile)
-    dlg.setFilter("MEKA dataset files (*.arff)")
-
-    if dlg.exec_():
-        filenames = dlg.selectedFiles()
-        f = open(filenames[0], 'r')
-        self.le.setText(filenames[0])
-        with f:
-            line = f.readline()
-            flag = False
-            for i in line.split():
-                if flag is True:
-                    break
-                if (i == "-C") or (i == "-c"):
-                    flag = True
-
-            if not flag:
-                f.close()
-                self.emit(SIGNAL('add(QString)'), 'ERROR1')
-                # self.contents.setText("Error en el formato de la cabecera del fichero de dataset")
-                return
-                # sys.exit("Wrong format for the dataset header")
-            # else:
-            # save filename for posterior execution
-        return filenames[0]
-    else:
-        if self.le.text() is not '':
-            return self.le.text()
-        else:
-            return ''
-
-
 class Transfomer:
     def transform_to_multiclass(self, y):
         self.label_count = y.shape[1]

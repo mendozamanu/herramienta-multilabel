@@ -33,7 +33,7 @@ def open_file(self):
 
             if not flag:
                 f.close()
-                QMessageBox.about(self, "Error", "Error en el formato de la cabecera del fichero de dataset")
+                QMessageBox.warning(self, "Error", "Error en el formato de la cabecera del fichero de dataset")
                 self.contents.append("Error en el formato de la cabecera del fichero de dataset")
                 # sys.exit("Wrong format for the dataset header")
                 return ''

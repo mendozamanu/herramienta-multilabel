@@ -49,11 +49,11 @@ def load(self):
                 if element.tag == 'dataset':
                     ok = 1
             if not ok == 1:
-                QMessageBox.about(self, "Aviso", u"El archivo XML cargado no es válido, "
+                QMessageBox.warning(self, "Aviso", u"El archivo XML cargado no es válido, "
                                                  "revise el contenido o vuelva a generarlo")
                 return ''
         else:
-            QMessageBox.about(self, "Aviso", u"El archivo XML cargado no es válido, "
+            QMessageBox.warning(self, "Aviso", u"El archivo XML cargado no es válido, "
                                              "revise el contenido o vuelva a generarlo")
             return ''
         if tree.findall('.//dataset'):
@@ -61,7 +61,7 @@ def load(self):
                 if name.get('filename') and name.get('op1') and name.get('op2') and name.get('op3') and name.get('op4'):
                     ok = 1
                 else:
-                    QMessageBox.about(self, "Aviso", u"El archivo XML cargado no es válido, "
+                    QMessageBox.warning(self, "Aviso", u"El archivo XML cargado no es válido, "
                                                      "revise el contenido o vuelva a generarlo")
                     return ''
         if tree.findall('.//estratificado'):
@@ -71,7 +71,7 @@ def load(self):
                 if nam.get('cbase') and nam.get('method') and nam.get('args'):
                     ok = 1
                 else:
-                    QMessageBox.about(self, "Aviso", u"El archivo XML cargado no es válido, "
+                    QMessageBox.warning(self, "Aviso", u"El archivo XML cargado no es válido, "
                                                      "revise el contenido o vuelva a generarlo")
                     return ''
         if ok == 1:

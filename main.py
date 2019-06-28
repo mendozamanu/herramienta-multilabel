@@ -303,6 +303,8 @@ class XmlW(QMainWindow):
         centerp = QApplication.desktop().screenGeometry().center()
         framegm.moveCenter(centerp)
         self.move(framegm.topLeft())
+        if xmlname == '':
+            self.btn3.setEnabled(False)
 
         self.plots = None
 
@@ -323,6 +325,7 @@ class XmlW(QMainWindow):
             xmlname = ret
             self.load.setText(str(xmlname))
             self.info.clear()
+            self.btn3.setEnabled(True)
 
     def getWorkingDir(self):
         global dir, wdir
@@ -926,6 +929,7 @@ class DatasetW(QMainWindow):
         self.c2.setEnabled(False)
         self.c3.setEnabled(False)
         self.c4.setEnabled(False)
+        self.btn5.setEnabled(False)
 
     def __init__(self, parent=None):
         super(DatasetW, self).__init__(parent)
@@ -998,6 +1002,7 @@ class DatasetW(QMainWindow):
                 ds.add_op3(self.c3.isChecked())
                 ds.add_op4(self.c4.isChecked())
                 datasets.append(ds)
+                self.btn5.setEnabled(True)
                 self.list.setCurrentItem(it)
                 global proxy
                 proxy.setSourceModel(self.list.model())
@@ -1034,6 +1039,9 @@ class DatasetW(QMainWindow):
             self.c2.setChecked(False)
             self.c3.setChecked(False)
             self.c4.setChecked(False)
+            self.contents.append(u">Dataset borrado correctamente")
+        if len(datasets) == 0:
+            self.btn5.setEnabled(False)
 
     def plots(self):
 
@@ -1192,6 +1200,7 @@ class FoldsW(QMainWindow):
 
         if len(itms) < 1:
             QMessageBox.warning(self, "Aviso", u"Aviso. No se ha seleccionado ningún dataset.")
+            self.flabel3.setText(u"Cancelado")
         c1 = self.checkmt1.isChecked()
         c2 = self.checkmt2.isChecked()
         c3 = self.checkmt3.isChecked()
@@ -1201,6 +1210,7 @@ class FoldsW(QMainWindow):
                 pass  # Permitimos guardar sin ningún metodo de estratificación
             else:
                 QMessageBox.warning(self, "Aviso", u"Aviso. No se ha seleccionado ningún método de estratificación.")
+                self.flabel3.setText(u"Cancelado")
                 self.lst.setSelectionMode(QAbstractItemView.SingleSelection)
                 return
 
@@ -1211,6 +1221,7 @@ class FoldsW(QMainWindow):
                     # Esto reseteará los estratifs si volvemos a añadir sobre uno ya establecido
             if int(self.nlabels.text()) < 2:
                 QMessageBox.warning(self, "Aviso", u"No se pueden ejecutar particiones con 0 ó 1 folds.")
+                self.flabel3.setText(u"Cancelado")
                 self.lst.setSelectionMode(QAbstractItemView.SingleSelection)
                 return
 
@@ -1224,6 +1235,7 @@ class FoldsW(QMainWindow):
                         f = stratif(0)  # id= 0 iterative
                         if int(self.nlabels.text()) < 2:
                             self.flabel3.setText(u"Aviso. No se pueden ejecutar particiones con 0 ó 1 folds...")
+                            self.flabel3.setText(u"Cancelado")
                             self.flabel3.show()
                         else:
                             f.add_folds(int(self.nlabels.text()))
@@ -1239,6 +1251,7 @@ class FoldsW(QMainWindow):
                         f = stratif(1)  # id= 1 random
                         if int(self.nlabels.text()) < 2:
                             self.flabel3.setText(u"Aviso. No se pueden ejecutar particiones con 0 ó 1 folds...")
+                            self.flabel3.setText(u"Cancelado")
                             self.flabel3.show()
                         else:
                             f.add_folds(int(self.nlabels.text()))
@@ -1254,6 +1267,7 @@ class FoldsW(QMainWindow):
                         f = stratif(2)  # id= 2 labelset
                         if int(self.nlabels.text()) < 2:
                             self.flabel3.setText(u"Aviso. No se pueden ejecutar particiones con 0 ó 1 folds...")
+                            self.flabel3.setText(u"Cancelado")
                             self.flabel3.show()
                         else:
                             f.add_folds(int(self.nlabels.text()))

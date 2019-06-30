@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+import os
+import sys
 from pip._internal import main as pipmain
 """
 pipreqs.py: run ``pip install`` iteratively over a requirements file.

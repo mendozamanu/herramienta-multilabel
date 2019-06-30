@@ -1,4 +1,7 @@
+build-essential
 python-qt4
 libxml2-dev
 libxslt-dev
 python-dev
+python-pip
+python-tk

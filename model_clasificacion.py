@@ -12,18 +12,6 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from sklearn.metrics import classification_report
 
-# Parametros para los clasificadores base
-gk = 5
-gn_neighbors = 5
-gn_estimators = 10
-gcriterion_rf = 'gini'  # also supported 'entropy'
-gcriterion_dt = 'gini'
-gkernel = 'rbf'
-ggamma = 0.0
-gC = 1.0
-# ---------
-ejecs = 0
-
 
 def readDataFromFile(self, fileName):
     """This functions reads data from a file and store it in two matrices"""
@@ -105,7 +93,7 @@ def readDataFromFile(self, fileName):
     return X, y
 
 
-# Modificacion de la implementacion de Scikit-learn para evitar error de división por 0, que ocasionaba
+# Modificación de la implementación de Scikit-learn para evitar error de división por 0, que ocasionaba
 # mean avg precision nan en muchos folds y datasets.
 def average_precision_score(y_true, y_score, average="macro", pos_label=1,
                             sample_weight=None):
@@ -248,32 +236,27 @@ def make_classif(self, nfolds, fname, cl, parm, stratif, dir):
     cbase = cbase.split('=')[1]
 
     if not str(cl).split('(')[0] == 'MLkNN':
-        fd.write(cbase + ';')  # Clasific base
+        fd.write(cbase + ';')  # Clasificador base
     else:
         fd.write('MLkNN' + ';')
 
     fd.write(parm + ';')  # Params de los metodos
 
     fd.write(str(s) + ';')  # El nombre del dataset
-    # fp.write("Accuracy: ")
+
     fd.write(str(sum(fold_accuracy) / len(fold_accuracy)) + ';')
-    # fp.write("Hamming loss: ")
     fd.write(str(sum(fold_hamming) / len(fold_hamming)) + ';')
 
-    # fp.write("Coverage: ")
     if len(fold_cover) > 0:
         fd.write(str(sum(fold_cover) / len(fold_cover)) + ';')
 
-    # fp.write("Ranking loss: ")
     if len(fold_rank) > 0:
         fd.write(str(sum(fold_rank) / len(fold_rank)) + ';')
 
-    # fp.write("Mean average precision (macro, micro): ")
     if len(fold_prec) > 0:
         fd.write(str(sum(fold_prec) / len(fold_prec)) + ';')
         fd.write(str(sum(fold_precm) / len(fold_precm)) + ';')
 
-    # fp.write("Micro-average AUC: ")
     if len(fold_auc) > 0:
         fd.write(str(sum(fold_auc) / len(fold_auc)) + ';')
 
@@ -298,7 +281,7 @@ def make_classif(self, nfolds, fname, cl, parm, stratif, dir):
 
 def getargs(self, metodo):
     if metodo == 'MlKNN':
-        # Requiere parametro k
+        # Requiere parámetro k
         k, ok = QInputDialog.getInt(self, u"Parámetro k - MlKNN", u"Introduzca el valor de k para MlKNN: ", 5,
                                     min=1, max=1000)
         if ok:

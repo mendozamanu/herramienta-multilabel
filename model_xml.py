@@ -25,15 +25,6 @@ import model_clasificacion as mc
 import model_dataset as md
 import model_folds as mf
 
-gk = 5
-gn_neighbors = 5
-gn_estimators = 10
-gcriterion_rf = 'gini'
-gcriterion_dt = 'gini'
-gkernel = 'rbf'
-ggamma = 0.0
-gC = 1.0
-
 
 def load(self):
     dlg = QFileDialog()
@@ -544,7 +535,7 @@ def execute_class(self, fname, dir):
             self.emit(SIGNAL('progress'), 100)
             self.emit(SIGNAL('infoclassif'), u'\nTerminado\n')
 
-    meth_count.append(aux)  # Le pasamos el contador del ultimo dset ya q no vuelve a entrar para ponerlo
+    meth_count.append(aux)  # Le pasamos el contador del último dataset ya que no vuelve a entrar para ponerlo
     aux = 0
     self.emit(SIGNAL('log'))
 

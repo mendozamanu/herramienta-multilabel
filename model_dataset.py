@@ -21,7 +21,6 @@ def open_file(self):
     if dlg.exec_():
         filenames = dlg.selectedFiles()
         f = open(filenames[0], 'r')
-        # self.contents.setText(u"Cargando el dataset...")
         with f:
             line = f.readline()
             flag = False
@@ -35,9 +34,8 @@ def open_file(self):
                 f.close()
                 QMessageBox.warning(self, "Error", "Error en el formato de la cabecera del fichero de dataset")
                 self.contents.append("Error en el formato de la cabecera del fichero de dataset")
-                # sys.exit("Wrong format for the dataset header")
                 return ''
-        # self.contents.append(filenames[0])
+
         return filenames[0]
     else:
         return ''
@@ -138,7 +136,7 @@ def convert(self, fname, dir):
         sizeofint = 4
         sizeofptr = 8
         dense_size = len(X) * len(X[0]) * sizeofdouble + len(X) * sizeofptr
-        # nz = np.count_nonzero(X)
+
         nz = 0
         for i in range(0, len(X)):
             for j in range(0, len(X[0])):
@@ -221,11 +219,10 @@ def cardinality(self, df):
         l2 = datafile.readline()
         l3 = datafile.readline()
         instances = int(l1.split()[1])
-        # print instances
+
         features = int(l2.split()[1])
-        # print features
+
         labels = int(l3.split()[1])
-        # print labels
 
         l4 = datafile.readline()
 
@@ -255,11 +252,11 @@ def cardinality(self, df):
                     label = map(int, l4.strip().split()[features + 1:features + 1 + labels])
                     # To remove the '[' ']' from the labels extraction
                     dist.append(''.join(map(str, l4.strip().split()[features + 1:features + 1 + labels])))
-                    # print dist en dist tenemos todas las combinacs, luego hacemos el set
+                    # en dist tenemos todas las combinacs, luego hacemos el set
                     tmp = sum(label)
                     insts[tmp] += 1
                     avg += sum(label)
-                    # print avg
+
                 else:
                     # Sparse . find '[' and start reading until ']'
                     label = map(int,
@@ -273,8 +270,7 @@ def cardinality(self, df):
             l4 = datafile.readline()
 
         un_combs = set(dist)
-        # print sorted(un_combs)
-        # print ("----------------")
+
         fp.write("Cardinality: ")
         card = avg / (instances * 1.0)
         fp.write(str(card) + '\n')
@@ -308,7 +304,6 @@ def cardinality(self, df):
         fp.write("Label combinations frequency: \n")
         for value, count in countr.most_common():
             fp.write(str(int(value, 2)) + ' ' + str(count) + '\n')
-        # print countr
 
         datafile.close()
         self.emit(SIGNAL('textoinf'), "\nFichero report creado: " + '\n>>' + str(nwdfname) +
@@ -319,7 +314,6 @@ def cardinality(self, df):
 
 
 def labfrecplot(insts, name, dir):
-    # matplotlib.use('Agg')
     # insts[] is the vector to plot
     tmp = os.path.basename(str(name))
     dat = os.path.splitext(tmp)[0]
@@ -461,7 +455,6 @@ def coov(self, name, dir, plt1, plt2):
             X = np.array(x)
 
         L = label_correlation(y.transpose(), 0.19)
-        # print L
 
         global temp
 
@@ -492,8 +485,6 @@ def coov(self, name, dir, plt1, plt2):
 
         n = L.shape[0]
         cor = np.zeros((n * n) - n)
-
-        # print cor.shape
 
         for i in range(0, L.shape[0]):
             for j in range(L.shape[1]):
@@ -549,14 +540,12 @@ def coov(self, name, dir, plt1, plt2):
             plt.plot(cor)
             plt.axis([0, cor.shape[0], 0, 1.1])
             plt.xlabel('Distinct label pairs')
-            # plt.set_xlim(0, cor.shape[0])
             plt.ylabel('Correlation')
             plt.title(str(dat) + ': ' + 'Correlation distribution')
 
             plt.annotate(str("{0:.3f}".format(cor[0])), xy=(0, cor[0] + 0.02))
             plt.annotate(str("{0:.3f}".format(cor[-1])), xy=((n * n) - n - 2, cor[-1] + 0.02))
 
-            # plt.show()
             if os.path.exists(save):
                 plt.savefig(save + dat + '_corrordered.png')
             plt.close()

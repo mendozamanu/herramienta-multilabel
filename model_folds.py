@@ -280,6 +280,7 @@ def gen_folds(self, nfolds, fname, dir, mk1, mk2, mk3):
 
         if nfolds > 0:
 
+            self.emit(SIGNAL('add(QString)'), str(nfolds))
             if mk1:
                 route = str(dir) + '/' + str(suffix) + '/' + str(suffix) + str(nfolds) + '_iterative'
 
@@ -372,10 +373,3 @@ def gen_folds(self, nfolds, fname, dir, mk1, mk2, mk3):
         else:
             self.emit(SIGNAL('add(QString)'), 'Info3')
 
-    self.emit(SIGNAL('add(QString)'), str(nfolds))
-    if mk1:
-        self.emit(SIGNAL('add(QString)'), '1')
-    if mk2:
-        self.emit(SIGNAL('add(QString)'), '2')
-    if mk3:
-        self.emit(SIGNAL('add(QString)'), '3')

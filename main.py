@@ -1,5 +1,6 @@
 # coding=utf-8
 import io
+import logo_qr
 import os
 import shutil
 import sys
@@ -18,7 +19,6 @@ import ctrl
 
 root = etree.Element("experimento")
 file = ''
-text = str('')
 nfolds = 0
 mk1 = False
 mk2 = False
@@ -267,7 +267,6 @@ class XmlW(QMainWindow):
 
         self.threadPool = []
 
-        print tempxml
         self.load = QLineEdit()  # Para cargar el xml a ejecutar
         if not tempxml == '':
             self.load.setText(tempxml)
@@ -303,8 +302,11 @@ class XmlW(QMainWindow):
         centerp = QApplication.desktop().screenGeometry().center()
         framegm.moveCenter(centerp)
         self.move(framegm.topLeft())
-        if xmlname == '':
+
+        if self.load.text() == '':
             self.btn3.setEnabled(False)
+        else:
+            self.btn3.setEnabled(True)
 
         self.plots = None
 
@@ -680,7 +682,6 @@ class ClassifW(QMainWindow):
 
         itms = self.lst.selectedIndexes()
 
-        print len(itms)
         if len(itms) >= 1:
             for it in itms:
                 c = metodo()
@@ -690,7 +691,6 @@ class ClassifW(QMainWindow):
                     args = ctrl.getargs(self, str(self.base.currentText()))  # Le pasamos los clasificadores base
                     if not args is None:
                         c.addcbase(str(self.base.currentText()))
-                    # print args
                     else:
                         self.txt.setText(u"Clasificación cancelada")
                         QMessageBox.information(self, "Aviso", u"Operación cancelada")
@@ -703,8 +703,6 @@ class ClassifW(QMainWindow):
                         self.txt.setText(u"Clasificación cancelada")
                         QMessageBox.information(self, "Aviso", u"Operación cancelada")
                         return
-
-                    # print args
 
                 c.addargs(args)
                 l = []
@@ -836,7 +834,7 @@ class ClassifW(QMainWindow):
 
             my_tree = etree.ElementTree(root)
 
-            dlg = QFileDialog().getSaveFileName(self, 'Guardar XML', selectedFilter='XML files (*.xml)')
+            dlg = QFileDialog().getSaveFileName(self, "Guardar XML", "", "XML files (*.xml)")
 
             global xmlname, startxml
 
@@ -975,7 +973,6 @@ class DatasetW(QMainWindow):
 
     def getdataset(self):
         global file
-        global text
 
         file = ctrl.eventload(self)
         if not file == '':  # No se ha cancelado la operac
@@ -1029,11 +1026,9 @@ class DatasetW(QMainWindow):
     def deletedset(self):
         global datasets
         for SelectedItem in self.list.selectedItems():
-            print 'len bf: ' + str(len(datasets))
             # print self.list.row(SelectedItem)
             datasets.pop(self.list.row(SelectedItem))
             item = self.list.takeItem(self.list.row(SelectedItem))
-            print 'len aft: ' + str(len(datasets))
 
             self.c1.setChecked(False)
             self.c2.setChecked(False)
@@ -1061,7 +1056,7 @@ class DatasetW(QMainWindow):
 
         my_tree = etree.ElementTree(root)
         global xmlname, startxml
-        dlg = QFileDialog().getSaveFileName(self, 'Guardar XML', selectedFilter='XML files (*.xml)')
+        dlg = QFileDialog().getSaveFileName(self, "Guardar XML", "", "XML files (*.xml)")
 
         if dlg:
             if not str(dlg).endswith('.xml'):
@@ -1332,7 +1327,7 @@ class FoldsW(QMainWindow):
 
             my_tree = etree.ElementTree(root)
 
-        dlg = QFileDialog().getSaveFileName(self, 'Guardar XML', selectedFilter='XML files (*.xml)')
+        dlg = QFileDialog().getSaveFileName(self, "Guardar XML", "", "XML files (*.xml)")
 
         if dlg:
             if not str(dlg).endswith('.xml'):
@@ -1571,6 +1566,7 @@ class MainApplication(QMainWindow):
             self.btn4.setEnabled(True)
             if not xmlname == '':
                 xmlUI.load.setText(xmlname)
+                xmlUI.btn3.setEnabled(True)
             xmlUI.btn1.clicked.connect(xmlUI.getxmlfile)
             xmlUI.btn2.clicked.connect(xmlUI.getWorkingDir)
             xmlUI.btn3.clicked.connect(xmlUI.execute)
@@ -1578,7 +1574,7 @@ class MainApplication(QMainWindow):
             xmlUI.show()
 
     def restart(self):
-        global file, text, nfolds, classif, dir, xmlname, tempxml, datasets, xmlUI, dsW, fW, cW, xW, p1
+        global file, nfolds, classif, dir, xmlname, tempxml, datasets, xmlUI, dsW, fW, cW, xW, p1
 
         if not dir == '' and os.path.isdir(dir + '/tmp/'):  # Control de errores aplicado para que esto sea posible
             shutil.rmtree(dir + '/tmp/')
@@ -1605,12 +1601,11 @@ class MainApplication(QMainWindow):
         self.btn4.setEnabled(True)
 
         file = ''
-        text = str('')
         nfolds = 0
         classif = []
         dir = './'
         xmlname = ''
-        tempxml = ''
+        #tempxml = ''
         datasets = []
         xmlUI = None
 
@@ -1636,7 +1631,8 @@ class MainApplication(QMainWindow):
 
 def main():
     app = QApplication(sys.argv)
-    app.setWindowIcon(QIcon('icon.png'))
+    QApplication.setStyle('Cleanlooks')
+    app.setWindowIcon(QIcon(':/icon.png'))
 
     translator = QTranslator(app)
     locale = QLocale.system().name()

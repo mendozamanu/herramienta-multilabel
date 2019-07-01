@@ -185,37 +185,57 @@ def make_classif(self, nfolds, fname, cl, parm, stratif, dir):
         y_score = cl.predict(X_test)
 
         if skip == 0:
-            y_prob = cl.predict_proba(X_test.todense())
+            try:
+                y_prob = cl.predict_proba(X_test.todense())
+            except:
+                self.emit(SIGNAL('logcns_c'), "Error en predict_proba")
             # -----------------------------------------#
             # Coverage\n",
-            c = sklearn.metrics.coverage_error(y_test, y_prob.toarray(), sample_weight=None)
-            fold_cover.append(c)
+            try:
+                c = sklearn.metrics.coverage_error(y_test, y_prob.toarray(), sample_weight=None)
+                fold_cover.append(c)
+            except:
+                self.emit(SIGNAL('logcns_c'), "Error en coverage")
 
             # -----------------------------------------#
             # Ranking loss\n",
-            rl = sklearn.metrics.label_ranking_loss(y_test, y_prob.toarray(), sample_weight=None)
-            fold_rank.append(rl)
+            try:
+                rl = sklearn.metrics.label_ranking_loss(y_test, y_prob.toarray(), sample_weight=None)
+                fold_rank.append(rl)
+            except:
+                self.emit(SIGNAL('logcns_c'), "Error en ranking loss")
             # -----------------------------------------#
             # Mean average precision
-            m = average_precision_score(y_test, y_prob.toarray(), average='macro', pos_label=1, sample_weight=None)
-            fold_prec.append(m)
+            try:
+                m = average_precision_score(y_test, y_prob.toarray(), average='macro', pos_label=1, sample_weight=None)
+                fold_prec.append(m)
 
-            m2 = average_precision_score(y_test, y_prob.toarray(), average='micro', pos_label=1, sample_weight=None)
-            fold_precm.append(m2)
-
+                m2 = average_precision_score(y_test, y_prob.toarray(), average='micro', pos_label=1, sample_weight=None)
+                fold_precm.append(m2)
+            except:
+                self.emit(SIGNAL('logcns_c'), "Error en average precision score")
             # -----------------------------------------#
             # Micro-average AUC
-            rmi = sklearn.metrics.roc_auc_score(y_test, y_prob.toarray(), average='micro', sample_weight=None,
-                                                max_fpr=None)
-            fold_auc.append(rmi)
+            try:
+                rmi = sklearn.metrics.roc_auc_score(y_test, y_prob.toarray(), average='micro', sample_weight=None,
+                                                    max_fpr=None)
+                fold_auc.append(rmi)
+            except:
+                self.emit(SIGNAL('logcns_c'), "Error en roc auc micro")
 
             # -----------------------------------------#
             # Medidas: sklearn.metrics...(true,predict,..)
-        acc = sklearn.metrics.accuracy_score(y_test, y_score)
-        fold_accuracy.append(acc)
+        try:
+            acc = sklearn.metrics.accuracy_score(y_test, y_score)
+            fold_accuracy.append(acc)
+        except:
+            self.emit(SIGNAL('logcns_c'), "Error en accuracy score")
         # -----------------------------------------#
-        hl = sklearn.metrics.hamming_loss(y_test, y_score)
-        fold_hamming.append(hl)
+        try:
+            hl = sklearn.metrics.hamming_loss(y_test, y_score)
+            fold_hamming.append(hl)
+        except:
+            self.emit(SIGNAL('logcns_c'), "Error en hamming loss")
 
     fd = open(outpname, 'a')
     tmp = os.path.basename(str(fname))
@@ -257,7 +277,10 @@ def make_classif(self, nfolds, fname, cl, parm, stratif, dir):
     if len(fold_auc) > 0:
         fd.write(str(sum(fold_auc) / len(fold_auc)) + ';')
 
-    d = classification_report(y_test, y_score, digits=20, output_dict=True)
+    try:
+        d = classification_report(y_test, y_score, digits=20, output_dict=True)
+    except:
+        self.emit(SIGNAL('logcns_c'), "Error al generar classification report")
     # es un dict de dicts -> en micro avg -> recall y f1-score
     #       -> en macro avg -> recall y f1-score
     for kv in d.items():
@@ -301,6 +324,8 @@ def getargs(self, metodo):
             n_estimators, ok = QInputDialog.getInt(self, u"Parámetro n_estimators - Random Forests",
                                                    u"Introduzca el valor de n_estimators para Random Forests: ", 10,
                                                    min=1, max=1000)
+            if not ok:
+                return
             criterion_rf, ok2 = QInputDialog.getItem(self, u"Parámetro criterion - Random Forests",
                                                      u"Seleccione el valor de criterion para Random Forests: ",
                                                      crits, 0, False)
@@ -314,9 +339,13 @@ def getargs(self, metodo):
             kernel, ok = QInputDialog.getItem(self, u"Parámetro kernel - SVM",
                                               u"Seleccione el valor de kernel para SVM: ",
                                               kern, 0, False)
+            if not ok:
+                return
             C, ok2 = QInputDialog.getDouble(self, u"Parámetro C - SVM", u"Seleccione el valor de C para SVM", 1.0,
                                             decimals=5, min=0.00001, max=10.0)
 
+            if not ok2:
+                return
             if kernel == 'poly' or kernel == 'sigmoid' or kernel == 'rbf':
                 # Necesitamos gamma
                 gamma, ok3 = QInputDialog.getDouble(self, u'Parámetro gamma - SVM',

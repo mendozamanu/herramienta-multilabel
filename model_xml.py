@@ -50,11 +50,11 @@ def load(self):
                     ok = 1
             if not ok == 1:
                 QMessageBox.warning(self, "Aviso", u"El archivo XML cargado no es válido, "
-                                                 "revise el contenido o vuelva a generarlo")
+                                                   "revise el contenido o vuelva a generarlo")
                 return ''
         else:
             QMessageBox.warning(self, "Aviso", u"El archivo XML cargado no es válido, "
-                                             "revise el contenido o vuelva a generarlo")
+                                               "revise el contenido o vuelva a generarlo")
             return ''
         if tree.findall('.//dataset'):
             for name in tree.findall('.//dataset'):
@@ -62,7 +62,7 @@ def load(self):
                     ok = 1
                 else:
                     QMessageBox.warning(self, "Aviso", u"El archivo XML cargado no es válido, "
-                                                     "revise el contenido o vuelva a generarlo")
+                                                       "revise el contenido o vuelva a generarlo")
                     return ''
         if tree.findall('.//estratificado'):
             ok = 1
@@ -72,7 +72,7 @@ def load(self):
                     ok = 1
                 else:
                     QMessageBox.warning(self, "Aviso", u"El archivo XML cargado no es válido, "
-                                                     "revise el contenido o vuelva a generarlo")
+                                                       "revise el contenido o vuelva a generarlo")
                     return ''
         if ok == 1:
             return filenames[0]
@@ -144,6 +144,7 @@ def execute_dset(self, fname, dir):
         doc = SimpleDocTemplate(dir + '/report/' + str(tstamp) + "_plot-report.pdf")
         styles = getSampleStyleSheet()
         parts = []
+        report=''
         save = str(dir) + '/' + 'tmp/'
         self.emit(SIGNAL('logcns_ds'), save + '\n')
         self.emit(SIGNAL('logcns_ds'), fileds[0] + '\n')
@@ -186,12 +187,17 @@ def execute_dset(self, fname, dir):
                         parts.append(p)
                     except:
                         self.emit(SIGNAL('logcns_ds'), 'Error en la generación de las medidas del dataset\n')
+                        self.emit(SIGNAL('textoinf'), u'>> Error en la generación de las medidas del dataset\n')
+                        self.emit(SIGNAL('finished'))
+                        return
 
                     if os.path.isfile(report):
                         try:
                             fo = open(report, 'r')
                         except:
                             self.emit(SIGNAL('logcns_ds'), "Error al leer medidas del dataset\n")
+                            self.emit(SIGNAL('finished'))
+                            return
 
                         headers = []
                         data = []
@@ -262,6 +268,10 @@ def execute_dset(self, fname, dir):
                     except:
                         self.emit(SIGNAL('logcns_ds'),
                                   'Error en la generación de gráfica de correlación de etiquetas\n')
+                        self.emit(SIGNAL('textoinf'),
+                                  u'>> Error en la generación de gráfica de correlación de etiquetas\n')
+                        self.emit(SIGNAL('finished'))
+                        return
 
                 if not op3[i] == 'False':
                     if not os.path.exists(save):
@@ -281,6 +291,10 @@ def execute_dset(self, fname, dir):
                     except:
                         self.emit(SIGNAL('logcns_ds'), 'Error en la generación de gráfica de '
                                                        'distribución de la correlación\n')
+                        self.emit(SIGNAL('textoinf'), u'Error en la generación de gráfica de '
+                                                       u'distribución de la correlación\n')
+                        self.emit(SIGNAL('finished'))
+                        return
 
                 if not op4[i] == 'False':
                     if not os.path.exists(save):
@@ -300,6 +314,10 @@ def execute_dset(self, fname, dir):
                     except:
                         self.emit(SIGNAL('logcns_ds'), 'Error en la generación de gráfica de '
                                                        'frecuencias de las etiquetas\n')
+                        self.emit(SIGNAL('textoinf'), u'Error en la generación de gráfica de '
+                                                       u'frecuencias de las etiquetas\n')
+                        self.emit(SIGNAL('finished'))
+                        return
 
         if os.path.exists(save) or active == 1:
             try:

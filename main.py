@@ -516,16 +516,16 @@ class XmlW(QMainWindow):
 
         self.threadPool.append(GenericThread(ctrl.execute_dset, self, xmlname, dir))
 
-        #self.disconnect(self, SIGNAL("textoinf"), self.adds)
+        self.disconnect(self, SIGNAL("textoinf"), self.adds)
         self.connect(self, SIGNAL("textoinf"), self.adds)
 
-        #self.disconnect(self, SIGNAL("finished"), self.nxt)
+        self.disconnect(self, SIGNAL("finished"), self.nxt)
         self.connect(self, SIGNAL("finished"), self.nxt)
 
-        #self.disconnect(self, SIGNAL("prog1"), self.upd)
+        self.disconnect(self, SIGNAL("prog1"), self.upd)
         self.connect(self, SIGNAL("prog1"), self.upd)
 
-        #self.disconnect(self, SIGNAL("logcns_ds"), self.logconsole)
+        self.disconnect(self, SIGNAL("logcns_ds"), self.logconsole)
         self.connect(self, SIGNAL("logcns_ds"), self.logconsole)
 
         self.threadPool[len(self.threadPool) - 1].start()
@@ -536,16 +536,16 @@ class XmlW(QMainWindow):
 
         self.progress.setValue(0)
         self.threadPool.append(GenericThread(ctrl.execute_folds, self, xmlname, dir))
-        #self.disconnect(self, SIGNAL("add(QString)"), self.add)
+        self.disconnect(self, SIGNAL("add(QString)"), self.add)
         self.connect(self, SIGNAL("add(QString)"), self.add)
 
-        #self.disconnect(self, SIGNAL("update(int)"), self.upd)
+        self.disconnect(self, SIGNAL("update(int)"), self.upd)
         self.connect(self, SIGNAL("update(int)"), self.upd)
 
-        #self.disconnect(self, SIGNAL("end"), self.lst)
+        self.disconnect(self, SIGNAL("end"), self.lst)
         self.connect(self, SIGNAL("end"), self.lst)
 
-        #self.disconnect(self, SIGNAL("logcns_f"), self.logconsole)
+        self.disconnect(self, SIGNAL("logcns_f"), self.logconsole)
         self.connect(self, SIGNAL("logcns_f"), self.logconsole)
 
         self.threadPool[len(self.threadPool) - 1].start()
@@ -557,16 +557,16 @@ class XmlW(QMainWindow):
         self.progress.setValue(0)
         self.threadPool.append(GenericThread(ctrl.execute_class, self, xmlname, dir))
 
-        #self.disconnect(self, SIGNAL("infoclassif"), self.addc)
+        self.disconnect(self, SIGNAL("infoclassif"), self.addc)
         self.connect(self, SIGNAL("infoclassif"), self.addc)
 
-        #self.disconnect(self, SIGNAL("progress"), self.upd)
+        self.disconnect(self, SIGNAL("progress"), self.upd)
         self.connect(self, SIGNAL("progress"), self.upd)
 
-        #self.disconnect(self, SIGNAL("log"), self.log)
+        self.disconnect(self, SIGNAL("log"), self.log)
         self.connect(self, SIGNAL("log"), self.log)
 
-        #self.disconnect(self, SIGNAL("logcns_c"), self.logconsole)
+        self.disconnect(self, SIGNAL("logcns_c"), self.logconsole)
         self.connect(self, SIGNAL("logcns_c"), self.logconsole)
 
         self.threadPool[len(self.threadPool) - 1].start()

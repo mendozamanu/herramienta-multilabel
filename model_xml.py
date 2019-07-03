@@ -403,9 +403,9 @@ def execute_folds(self, fname, dir):
                         mf.gen_folds(self, nfls[i], filef[i], dir, True, False, False)
                     except:
                         self.emit(SIGNAL('logcns_f'), "Se ha producido un error en la "
-                                                      "generación de los folds, método: " + str(m1[i])) + '\n'
+                                                      "generación de los folds\n")
                         self.emit(SIGNAL('add(QString)'), u">Se ha producido un error en la generación "
-                                                          u"de los folds, método: " + str(m1[i]))
+                                                          u"de los folds. Error 1")
 
                 if not m2[i] == '0':
                     self.emit(SIGNAL('add(int)'), 0)
@@ -413,20 +413,20 @@ def execute_folds(self, fname, dir):
                         mf.gen_folds(self, nfls[i], filef[i], dir, False, True, False)
                     except:
                         self.emit(SIGNAL('logcns_f'), "Se ha producido un error en la "
-                                                      "generación de los folds, método: " + str(m2[i])) + '\n'
+                                                      "generación de los folds\n")
 
                         self.emit(SIGNAL('add(QString)'), u">Se ha producido un error en la generación "
-                                                          u"de los folds, método: " + str(m2[i]))
+                                                          u"de los folds. Error 2")
                 if not m3[i] == '0':
                     self.emit(SIGNAL('add(int)'), 0)
                     try:
                         mf.gen_folds(self, nfls[i], filef[i], dir, False, False, True)
                     except:
                         self.emit(SIGNAL('logcns_f'), "Se ha producido un error en la "
-                                                      "generación de los folds, método: " + str(m3[i])) + '\n'
+                                                      "generación de los folds\n")
 
                         self.emit(SIGNAL('add(QString)'), u">Se ha producido un error en la generación "
-                                                          u"de los folds, método: " + str(m3[i]))
+                                                          u"de los folds. Error 3")
 
     self.emit(SIGNAL('logcns_f'), "Paso terminado correctamente" + '\n')
 

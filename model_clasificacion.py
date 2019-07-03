@@ -77,7 +77,7 @@ def readDataFromFile(self, fileName):
                 if data == '[':
                     putToX = False
 
-                if putToX == True and (data != '[' and data != ']'):
+                if putToX and (data != '[' and data != ']'):
                     X[numberLine, numberData] = float(data)
                 else:
                     if (data != '[') and (data != ']'):
@@ -113,7 +113,7 @@ def average_precision_score(y_true, y_score, average="macro", pos_label=1,
                                                       average, sample_weight=sample_weight)
 
 
-#Método para realizar la clasificación del dataset
+# Método para realizar la clasificación del dataset
 def make_classif(self, nfolds, fname, cl, parm, stratif, dir):
     fold_accuracy = []
     fold_hamming = []
@@ -297,8 +297,7 @@ def getargs(self, metodo):
         if metodo == 'kNN':
             # Req n_neighbors
             n_neighbors, ok = QInputDialog.getInt(self, u"Parámetro n_neighbors - kNN", u"Introduzca el valor "
-                                                                                        u"de n_neighbors para "
-                                                                                        u"kNN: ", 5, min=1, max=1000)
+                                                  u"de n_neighbors para kNN: ", 5, min=1, max=1000)
             if ok:
                 result = str(n_neighbors)
             else:

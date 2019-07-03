@@ -147,7 +147,6 @@ def exec_fold(self, suffix, kf, X, y, f, sparse, number):
                                       number)
             self.completed += 100 / f
             self.emit(SIGNAL("update(int)"), self.completed)
-            # self.progress.setValue(self.completed)
             folds.append(fd)
             desired_number.append(d_n)
     else:
@@ -159,7 +158,6 @@ def exec_fold(self, suffix, kf, X, y, f, sparse, number):
                                       number)
             self.completed += 100 / f
             self.emit(SIGNAL("update(int)"), self.completed)
-            # self.progress.setValue(self.completed)
             folds.append(fd)
             desired_number.append(d_n)
 
@@ -183,7 +181,6 @@ def exec_fold(self, suffix, kf, X, y, f, sparse, number):
 def gen_folds(self, nfolds, fname, dir, mk1, mk2, mk3):
     if not str(fname).lower().endswith('.arff'):
         self.emit(SIGNAL('add(QString)'), 'ERROR2')
-        # sys.exit(u"Formato del dataset no válido, por favor use .arff datasets")
     else:
         dataset = arff.load(open(fname), 'rb')
         data = np.array(dataset['data'])
@@ -267,7 +264,7 @@ def gen_folds(self, nfolds, fname, dir, mk1, mk2, mk3):
         sizeofint = 4
         sizeofptr = 8
         dense_size = len(X) * len(X[0]) * sizeofdouble + len(X) * sizeofptr
-        # nz = np.count_nonzero(X)
+
         nz = 0
         for i in range(0, len(X)):
             for j in range(0, len(X[0])):

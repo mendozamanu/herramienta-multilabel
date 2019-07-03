@@ -425,38 +425,6 @@ def coov(self, name, dir, plt1, plt2):
             y = data[:, int(number):].astype(int)
             x = data[:, :int(number)]
 
-        if len(nominalIndexArray) > 0:
-            # Change the nominal attributes to numeric ones
-            index = 0
-            X = []
-            for k in x:
-                numericVector = []
-                for i in range(0, len(nominalIndexArray)):
-                    # Ahora tenemos que crear el vector que le vamos a poner al final de cada
-                    checkIfMissing = False
-                    for aux in nominals[i]:
-                        if aux == k[nominalIndexArray[i]]:
-                            # Add 1 to the array
-                            checkIfMissing = True
-                            numericVector.append(1)
-                        else:
-                            # Add 0 to the array
-                            checkIfMissing = True
-                            numericVector.append(0)
-                    if checkIfMissing is False:
-                        # Add another 1 to the array
-                        numericVector.append(1)
-                    else:
-                        numericVector.append(0)
-                auxVector = np.append(k, [numericVector])
-                # Substract that nominals values
-                auxVector = np.delete(auxVector, nominalIndexArray)
-                X.append(auxVector)
-
-            X = np.array(X)
-        else:
-            X = np.array(x)
-
         L = label_correlation(y.transpose(), 0.19)
 
         global temp
@@ -469,8 +437,6 @@ def coov(self, name, dir, plt1, plt2):
             L.tofile(fp, sep=" ", format='%s')
             fp.close()
             temp = 0
-
-        tri_indx = L[np.tril_indices(L.shape[0], -1)]
 
         # listas para almac los indices de los intervalos
         l0 = []

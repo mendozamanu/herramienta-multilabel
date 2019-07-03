@@ -11,11 +11,6 @@ from lxml import etree
 
 import ctrl
 
-# KNOWN BUGS:
-#        1. cuando termina la ejecución salen 2 errors/warnings sobre QObject::startTimer: Qtimer solo se puede usar en
-#        hilos lanzados por QThread.
-#        2. ó este error: Object::disconnect: Unexpected null parameter
-
 root = etree.Element("experimento")  # Variable para localizar la raíz del xml
 file = ''  # Variable para almacenar el dataset cargado recientemente
 nfolds = 0
@@ -248,7 +243,7 @@ class PlotWindow(QMainWindow):
     # Método que permite guardar la gráfica correspondiente al botón pulsado
     def save(self, fname):
 
-        dlg = QFileDialog().getSaveFileName(self, u'Guardar gráfica', selectedFilter='Image files (*.png)')
+        dlg = QFileDialog().getSaveFileName(self, u'Guardar gráfica', '', 'Image files (*.png)')
 
         if dlg:
             if not str(dlg).endswith('.png'):
@@ -322,7 +317,7 @@ class XmlW(QMainWindow):
     def __init__(self, parent=None):
         super(XmlW, self).__init__(parent)
 
-        self.setFixedSize(850, 400)  # Tamanio por defecto de ventana
+        self.setFixedSize(850, 400)  # Tamaño por defecto de ventana
 
         self.setWindowTitle(u"Herramienta para el estudio del problema "
                             u"de desequilibrio en problemas de clasificación multietiqueta")
@@ -521,16 +516,16 @@ class XmlW(QMainWindow):
 
         self.threadPool.append(GenericThread(ctrl.execute_dset, self, xmlname, dir))
 
-        self.disconnect(self, SIGNAL("textoinf"), self.adds)
+        #self.disconnect(self, SIGNAL("textoinf"), self.adds)
         self.connect(self, SIGNAL("textoinf"), self.adds)
 
-        self.disconnect(self, SIGNAL("finished"), self.nxt)
+        #self.disconnect(self, SIGNAL("finished"), self.nxt)
         self.connect(self, SIGNAL("finished"), self.nxt)
 
-        self.disconnect(self, SIGNAL("prog1"), self.upd)
+        #self.disconnect(self, SIGNAL("prog1"), self.upd)
         self.connect(self, SIGNAL("prog1"), self.upd)
 
-        self.disconnect(self, SIGNAL("logcns_ds"), self.logconsole)
+        #self.disconnect(self, SIGNAL("logcns_ds"), self.logconsole)
         self.connect(self, SIGNAL("logcns_ds"), self.logconsole)
 
         self.threadPool[len(self.threadPool) - 1].start()
@@ -541,16 +536,16 @@ class XmlW(QMainWindow):
 
         self.progress.setValue(0)
         self.threadPool.append(GenericThread(ctrl.execute_folds, self, xmlname, dir))
-        self.disconnect(self, SIGNAL("add(QString)"), self.add)
+        #self.disconnect(self, SIGNAL("add(QString)"), self.add)
         self.connect(self, SIGNAL("add(QString)"), self.add)
 
-        self.disconnect(self, SIGNAL("update(int)"), self.upd)
+        #self.disconnect(self, SIGNAL("update(int)"), self.upd)
         self.connect(self, SIGNAL("update(int)"), self.upd)
 
-        self.disconnect(self, SIGNAL("end"), self.lst)
+        #self.disconnect(self, SIGNAL("end"), self.lst)
         self.connect(self, SIGNAL("end"), self.lst)
 
-        self.disconnect(self, SIGNAL("logcns_f"), self.logconsole)
+        #self.disconnect(self, SIGNAL("logcns_f"), self.logconsole)
         self.connect(self, SIGNAL("logcns_f"), self.logconsole)
 
         self.threadPool[len(self.threadPool) - 1].start()
@@ -562,16 +557,16 @@ class XmlW(QMainWindow):
         self.progress.setValue(0)
         self.threadPool.append(GenericThread(ctrl.execute_class, self, xmlname, dir))
 
-        self.disconnect(self, SIGNAL("infoclassif"), self.addc)
+        #self.disconnect(self, SIGNAL("infoclassif"), self.addc)
         self.connect(self, SIGNAL("infoclassif"), self.addc)
 
-        self.disconnect(self, SIGNAL("progress"), self.upd)
+        #self.disconnect(self, SIGNAL("progress"), self.upd)
         self.connect(self, SIGNAL("progress"), self.upd)
 
-        self.disconnect(self, SIGNAL("log"), self.log)
+        #self.disconnect(self, SIGNAL("log"), self.log)
         self.connect(self, SIGNAL("log"), self.log)
 
-        self.disconnect(self, SIGNAL("logcns_c"), self.logconsole)
+        #self.disconnect(self, SIGNAL("logcns_c"), self.logconsole)
         self.connect(self, SIGNAL("logcns_c"), self.logconsole)
 
         self.threadPool[len(self.threadPool) - 1].start()
@@ -767,7 +762,8 @@ class ClassifW(QMainWindow):
                 self.base.setCurrentIndex(0)
             self.base.show()
             self.flabel1.show()
-    # Método para guardar las operaciones almacenadas hasta el momento 
+
+    # Método para guardar las operaciones almacenadas hasta el momento
     # (incluye la información de las operaciones de los datasets y los estratificados) en un fichero XML 
     # y pasar a la ventana de ejecución del experimento
     def getXml(self):
@@ -951,8 +947,8 @@ class DatasetW(QMainWindow):
             self.c1.setChecked(True)
             self.contents.append("Aviso, para calcular la frecuencia de las etiquetas hay que "
                                  "calcular las medidas del dataset")
-	
-	# Función para modificar el evento de cierre de la ventana
+
+    # Función para modificar el evento de cierre de la ventana
     def closeEvent(self, evnt):
         global file, dsW
         file = ''
@@ -960,8 +956,8 @@ class DatasetW(QMainWindow):
             item = self.grid1.takeAt(0)
             item.widget().deleteLater()
         dsW = False
-	
-	# Función para marcar las casillas de las operaciones guardadas para un dataset seleccionado
+
+    # Función para marcar las casillas de las operaciones guardadas para un dataset seleccionado
     def getOperats(self):
         if len(datasets) >= 1:
             for SelectedItem in self.list.selectedItems():
@@ -1626,6 +1622,7 @@ class MainApplication(QMainWindow):
         xW = False
 
         p1 = False
+
 
     def closeEvent(self, event):  # Redefinimos el evento de cierre (pedir confirmación)
 

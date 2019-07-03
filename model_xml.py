@@ -36,6 +36,7 @@ def load(self):
         filenames = dlg.selectedFiles()
         tree = etree.parse(str(filenames[0]))
 
+        # Comprobaciones para validar el fichero xml que se intenta cargar
         if tree.getroot().tag == 'experimento':
             for element in tree.iter():
                 if element.tag == 'dataset':

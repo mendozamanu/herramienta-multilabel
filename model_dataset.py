@@ -11,6 +11,7 @@ from PyQt4.QtGui import *
 temp = 1
 
 
+# Método para gestionar la apertura de un fichero de dataset .arff
 def open_file(self):
     dlg = QFileDialog()
 
@@ -199,6 +200,7 @@ def convert(self, fname, dir):
         return dir + '/' + suffix + '/' + suffix + '.complete'
 
 
+# Método para calcular las medidas características del dataset 
 def cardinality(self, df):
     tmp = os.path.basename(str(df))
     dat = os.path.splitext(tmp)[0]
@@ -313,6 +315,7 @@ def cardinality(self, df):
         return nwdfname, insts
 
 
+# Método para calcular la gráfica de frecuencia de etiquetas, requiere ejecutar cardinality
 def labfrecplot(insts, name, dir):
     # insts[] is the vector to plot
     tmp = os.path.basename(str(name))
@@ -336,7 +339,6 @@ def labfrecplot(insts, name, dir):
     plt.close()
 
 
-# TODO: mejorar la visualizacion de la grafica que se genera en cardinality...........................................
 def label_correlation(y, s):
     """Correlation between labels in a label matrix
     Parameters
@@ -364,6 +366,7 @@ def label_correlation(y, s):
     return L
 
 
+# Método para generar las gráficas que usan la correlación de las etiquetas
 def coov(self, name, dir, plt1, plt2):
     tmp = os.path.basename(str(name))
     dat = os.path.splitext(tmp)[0]

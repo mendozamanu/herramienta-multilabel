@@ -14,6 +14,7 @@ from skmultilearn.model_selection.measures import folds_without_evidence_for_at_
 from skmultilearn.model_selection.measures import label_combination_distribution
 
 
+# Transformar de multietiqueta a multiclase para Labelsets
 class Transfomer:
     def transform_to_multiclass(self, y):
         self.label_count = y.shape[1]
@@ -34,6 +35,7 @@ class Transfomer:
         return train_vector
 
 
+# Llamada para el estratificado de labelsets
 def stratified_folds(n_splits, y):
     t = Transfomer()
     kf = StratifiedKFold(n_splits=n_splits, random_state=None, shuffle=False)
@@ -41,6 +43,7 @@ def stratified_folds(n_splits, y):
     return folds
 
 
+# Método auxiliar que guarda los ficheros train y test de las particiones
 def aux_fold(suffix, kfold, X, train_index, X_train, X_test, y_train, y_test, f, sparse, number):
     folds = train_index
     desired_number = (X.shape[0] * (f - 1)) / f
@@ -128,6 +131,7 @@ def aux_fold(suffix, kfold, X, train_index, X_train, X_test, y_train, y_test, f,
     return kfold, folds, desired_number
 
 
+# Método para generar las particiones y medidas de la generación de los folds (ED, LD, FZ...)
 def exec_fold(self, suffix, kf, X, y, f, sparse, number):
     # print f
     kfold = 0
@@ -175,6 +179,7 @@ def exec_fold(self, suffix, kf, X, y, f, sparse, number):
     fp.close()
 
 
+# Método principal para la generación de las particiones, invoca al resto de métodos relacionados
 def gen_folds(self, nfolds, fname, dir, mk1, mk2, mk3):
     if not str(fname).lower().endswith('.arff'):
         self.emit(SIGNAL('add(QString)'), 'ERROR2')

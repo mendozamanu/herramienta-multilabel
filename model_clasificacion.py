@@ -113,6 +113,7 @@ def average_precision_score(y_true, y_score, average="macro", pos_label=1,
                                                       average, sample_weight=sample_weight)
 
 
+#Método para realizar la clasificación del dataset
 def make_classif(self, nfolds, fname, cl, parm, stratif, dir):
     fold_accuracy = []
     fold_hamming = []
@@ -279,6 +280,7 @@ def make_classif(self, nfolds, fname, cl, parm, stratif, dir):
     self.emit(SIGNAL('infoclassif'), u">>>Consulte el fichero resultante en: " + str(outpname) + '\n')
 
 
+# Método para obtener los parámetros de los clasificadores base
 def getargs(self, metodo):
     if metodo == 'MlKNN':
         # Requiere parámetro k

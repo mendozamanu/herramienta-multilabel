@@ -4,4 +4,7 @@ libxml2-dev
 libxslt-dev
 python-dev
 python-pip
+virtualenv
 python-tk
+libcanberra-gtk-module 
+libcanberra-gtk3-module

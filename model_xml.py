@@ -26,6 +26,7 @@ import model_dataset as md
 import model_folds as mf
 
 
+# Método para cargar un fichero xml y comprobar su validez
 def load(self):
     dlg = QFileDialog()
     dlg.setFileMode(QFileDialog.AnyFile)
@@ -72,11 +73,14 @@ def load(self):
     return ''
 
 
+# Método para definir el directorio de trabajo del experimento
 def savedir(self):
     file = str(QFileDialog.getExistingDirectory(self, 'Select Directory'))
     return file
 
 
+# Método para cargar las operaciones indicadas en el experimento e invocar a los métodos correspondientes
+# También se genera un informe en PDF con todos los resultados obtenidos
 def execute_dset(self, fname, dir):
     fileds = []
     op1 = []
@@ -325,6 +329,7 @@ def execute_dset(self, fname, dir):
     self.emit(SIGNAL('finished'))
 
 
+# Método para cargar los estratificados a realizar indicados en el experimento e invocar a los métodos correspondientes
 def execute_folds(self, fname, dir):
     filef = []
     nfls = []
@@ -427,6 +432,7 @@ def execute_folds(self, fname, dir):
     self.emit(SIGNAL('end'))
 
 
+# Método para cargar los clasificadores indicados en el experimento e invocar a los métodos correspondientes
 def execute_class(self, fname, dir):
     clasactive = 0
     fclass = []

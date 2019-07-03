@@ -1,6 +1,5 @@
 # coding=utf-8
 import io
-import logo_qr
 import os
 import shutil
 import sys
@@ -1644,7 +1643,7 @@ class MainApplication(QMainWindow):
 def main():
     app = QApplication(sys.argv)
     QApplication.setStyle('Cleanlooks')
-    app.setWindowIcon(QIcon(':/icon.png'))
+    app.setWindowIcon(QIcon('./icon.png'))
 
     translator = QTranslator(app)
     locale = QLocale.system().name()

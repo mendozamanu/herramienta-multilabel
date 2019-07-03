@@ -7,26 +7,20 @@ def main(argv):
 	except IndexError:
 		print("usage: aptreqs.py REQ_FILE")
 	else:
-		if not os.path.exists('./tmp/'):
-			os.makedirs('./tmp/')
-		if os.path.isfile('./tmp/stdout'):
-			os.remove('./tmp/stdout')
+		if not os.path.exists('./temp/'):
+			os.makedirs('./temp/')
+		if os.path.isfile('./temp/stdout'):
+			os.remove('./temp/stdout')
 		
 	with open(filename, 'r') as f:
+		print "Ejecutando apt-get update..."
+		check_call(['apt-get', 'update'],
+						   stdout=open('./temp/stdout','ab'), stderr=STDOUT)
 		for line in f:
 			try:
-				if line == 'python-pip':
-					print "Instalando: "+str(line.strip()+"...")
-					check_call(['apt-get', 'install', '-y', line.strip()],
-							stdout=open('./tmp/stdout','ab'), stderr=STDOUT)
-					check_call(['pip', 'install', 'virtualenv'],
-							stdout=open('./tmp/stdout','ab'), stderr=STDOUT)
-					
-					os.system('python2.7 -m virtualenv libs && . libs/bin/activate')
-				else:
-					print "Instalando: "+str(line.strip()+"...")
-					check_call(['apt-get', 'install', '-y', line.strip()],
-							stdout=open('./tmp/stdout','ab'), stderr=STDOUT)
+				print "Instalando: "+str(line.strip()+"...")
+				check_call(['apt-get', 'install', '-y', line.strip()],
+							stdout=open('./temp/stdout','ab'), stderr=STDOUT)
 			except:
 				print "Se ha producido un error en la llamada, compruebe el archivo /tmp/stdout para más información"
 

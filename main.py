@@ -317,7 +317,7 @@ class XmlW(QMainWindow):
     def __init__(self, parent=None):
         super(XmlW, self).__init__(parent)
 
-        self.setFixedSize(850, 400)  # Tamaño por defecto de ventana
+        self.setFixedSize(870, 500)  # Tamaño por defecto de ventana
 
         self.setWindowTitle(u"Herramienta para el estudio del problema "
                             u"de desequilibrio en problemas de clasificación multietiqueta")
@@ -655,7 +655,7 @@ class ClassifW(QMainWindow):
     def __init__(self, parent=None):
         super(ClassifW, self).__init__(parent)
 
-        self.setFixedSize(850, 400)  # Tamanio por defecto de ventana
+        self.setFixedSize(870, 500)  # Tamanio por defecto de ventana
 
         self.setWindowTitle(u"Herramienta para el estudio del problema "
                             u"de desequilibrio en problemas de clasificación multietiqueta")
@@ -934,7 +934,7 @@ class DatasetW(QMainWindow):
     def __init__(self, parent=None):
         super(DatasetW, self).__init__(parent)
 
-        self.setFixedSize(850, 400)  # Tamaño por defecto de ventana
+        self.setFixedSize(870, 500)  # Tamaño por defecto de ventana
 
         self.setWindowTitle(u"Herramienta para el estudio del problema "
                             u"de desequilibrio en problemas de clasificación multietiqueta")
@@ -1149,7 +1149,7 @@ class FoldsW(QMainWindow):
     def __init__(self, parent=None):
         super(FoldsW, self).__init__(parent)
 
-        self.setFixedSize(850, 400)  # Tamaño por defecto de ventana
+        self.setFixedSize(870, 500)  # Tamaño por defecto de ventana
 
         self.setWindowTitle(u"Herramienta para el estudio del problema "
                             u"de desequilibrio en problemas de clasificación multietiqueta")
@@ -1401,7 +1401,7 @@ class MainApplication(QMainWindow):
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowSystemMenuHint & Qt.WindowCloseButtonHint
                             & Qt.WindowMinimizeButtonHint)
 
-        self.setFixedSize(850, 400)  # Tamaño por defecto de ventana
+        self.setFixedSize(870, 500)  # Tamaño por defecto de ventana
 
         framegm = self.frameGeometry()
         self.move(framegm.topLeft())

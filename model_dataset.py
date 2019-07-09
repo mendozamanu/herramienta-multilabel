@@ -3,7 +3,9 @@ import os
 from collections import Counter
 
 import arff
-import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')
+from matplotlib import pyplot as plt
 import numpy as np
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *

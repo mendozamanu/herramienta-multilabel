@@ -259,7 +259,7 @@ def execute_dset(self, fname, dir):
                             p = Paragraph(u"Gráfica de correlación entre etiquetas", styles["Heading2"])
                             parts.append(p)
 
-                            parts.append(Image(save + dat + '_corrlabls.png'))
+                            parts.append(Image(save + dat + '_corrlabls.png', width=600, height=480, kind='proportional'))
                             parts.append(PageBreak())
                     except:
                         self.emit(SIGNAL('logcns_ds'),
